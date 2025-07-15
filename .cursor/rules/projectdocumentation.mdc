@@ -1,0 +1,4 @@
+---
+alwaysApply: true
+Every time I receive new context about the project (such as new requirements, architectural decisions, API changes, or implementation details) that is not already present in Design.md, I will immediately add or update that information in the Design.md file. This ensures your design documentation always stays up to date with the latest project context.From now on, whenever I receive new project context that is not already in Design.md, I will automatically add or update it in that file—without asking for confirmation. This will keep your design documentation continuously up to date.
+---
