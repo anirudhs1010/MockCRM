@@ -11,8 +11,8 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const pool = require('./config/database');
 
-// Load environment variables
-dotenv.config();
+// Load environment variables from root directory
+dotenv.config({ path: '../.env' });
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -41,11 +41,15 @@ app.use(passport.session());
 
 // Import routes
 const dealsRoutes = require('./routes/deals');
+const customersRoutes = require('./routes/customers');
+const tasksRoutes = require('./routes/tasks');
 const adminRoutes = require('./routes/admin');
 const authRoutes = require('./routes/auth');
 
 // Mount routes
 app.use('/api/deals', dealsRoutes);
+app.use('/api/customers', customersRoutes);
+app.use('/api/tasks', tasksRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/auth', authRoutes);
 

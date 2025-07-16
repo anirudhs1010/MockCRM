@@ -5,7 +5,8 @@
 // - Handle connection errors and logging
 // - Test database connection on startup
 const {Pool }=require('pg');
-require('dotenv').config();
+require('dotenv').config({ path: '../.env' });
+
 // Database connection configuration
 const pool = new Pool({
     user: process.env.DB_USER,       // Use environment variables

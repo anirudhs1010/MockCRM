@@ -21,4 +21,12 @@ router.get('/logout', (req, res) => {
   });
 });
 
+// Get authentication status
+router.get('/status', (req, res) => {
+  res.json({
+    authenticated: req.isAuthenticated(),
+    user: req.user
+  });
+});
+
 module.exports = router; 

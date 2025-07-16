@@ -1,7 +1,7 @@
 const passport = require('passport');
 const { Strategy } = require('passport-openidconnect');
 const pool = require('../config/database');
-require('dotenv').config();
+require('dotenv').config({ path: '../../.env' });
 
 passport.use('okta', new Strategy({
   issuer: `https://${process.env.OKTA_DOMAIN}/oauth2/default`,
@@ -24,10 +24,21 @@ passport.use('okta', new Strategy({
       // User exists, return the user
       return done(null, userResult.rows[0]);
     } else {
-      // Create new user (default role is 'sales_rep')
+      // Create new user - first create or find an account
+      let accountId;
+      
+      // For now, create a new account for each user
+      // In a real app, you might want to invite users to existing accounts
+      const accountResult = await pool.query(
+        'INSERT INTO accounts (name) VALUES ($1) RETURNING id',
+        [`${profile.displayName}'s Account`]
+      );
+      accountId = accountResult.rows[0].id;
+
+      // Create new user with account_id
       const newUserResult = await pool.query(
-        'INSERT INTO users (okta_id, email, name, role) VALUES ($1, $2, $3, $4) RETURNING *',
-        [sub, profile.emails[0].value, profile.displayName, 'sales_rep']
+        'INSERT INTO users (account_id, okta_id, email, name, role) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+        [accountId, sub, profile.emails[0].value, profile.displayName, 'sales_rep']
       );
       return done(null, newUserResult.rows[0]);
     }

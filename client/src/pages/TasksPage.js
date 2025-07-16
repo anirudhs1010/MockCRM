@@ -1,67 +1,66 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { adminAPI, dealsAPI } from '../services/api';
+import { dealsAPI, tasksAPI } from '../services/api';
 
-const DealsPage = () => {
+const TasksPage = () => {
   const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
   
   // State for UI
   const [searchTerm, setSearchTerm] = useState('');
-  const [stageFilter, setStageFilter] = useState('');
-  const [outcomeFilter, setOutcomeFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [priorityFilter, setPriorityFilter] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingDeal, setEditingDeal] = useState(null);
+  const [editingTask, setEditingTask] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
   // Fetch data
-  const { data: deals, isLoading, error } = useQuery({
+  const { data: tasks, isLoading, error } = useQuery({
+    queryKey: ['tasks'],
+    queryFn: () => tasksAPI.getAll(),
+  });
+
+  const { data: deals } = useQuery({
     queryKey: ['deals'],
     queryFn: dealsAPI.getAll,
   });
 
-  const { data: stages } = useQuery({
-    queryKey: ['stages'],
-    queryFn: adminAPI.getStages,
-    enabled: isAdmin(),
-  });
-
   // Mutations
   const createMutation = useMutation({
-    mutationFn: dealsAPI.create,
+    mutationFn: tasksAPI.create,
     onSuccess: () => {
-      queryClient.invalidateQueries(['deals']);
+      queryClient.invalidateQueries(['tasks']);
       setShowCreateModal(false);
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => dealsAPI.update(id, data),
+    mutationFn: ({ id, data }) => tasksAPI.update(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries(['deals']);
+      queryClient.invalidateQueries(['tasks']);
       setShowEditModal(false);
-      setEditingDeal(null);
+      setEditingTask(null);
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: dealsAPI.delete,
+    mutationFn: tasksAPI.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries(['deals']);
+      queryClient.invalidateQueries(['tasks']);
     },
   });
 
-  // Filter deals
-  const filteredDeals = deals?.filter(deal => {
+  // Filter tasks
+  const filteredTasks = tasks?.filter(task => {
     const matchesSearch = 
-      deal.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      deal.customer_name?.toLowerCase().includes(searchTerm.toLowerCase());
+      task.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      task.description?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStage = !stageFilter || deal.stage === stageFilter;
-    const matchesOutcome = !outcomeFilter || deal.outcome === outcomeFilter;
+    const matchesStatus = !statusFilter || task.status === statusFilter;
+    const matchesPriority = !priorityFilter || task.priority === priorityFilter;
     
-    return matchesSearch && matchesStage && matchesOutcome;
+    return matchesSearch && matchesStatus && matchesPriority;
   }) || [];
 
   // Handle form submissions
@@ -74,19 +73,19 @@ const DealsPage = () => {
   };
 
   const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this deal?')) {
+    if (window.confirm('Are you sure you want to delete this task?')) {
       deleteMutation.mutate(id);
     }
   };
 
-  const handleEdit = (deal) => {
-    setEditingDeal(deal);
+  const handleEdit = (task) => {
+    setEditingTask(task);
     setShowEditModal(true);
   };
 
-  // Get unique stages and outcomes for filters
-  const uniqueStages = [...new Set(deals?.map(deal => deal.stage).filter(Boolean))];
-  const uniqueOutcomes = [...new Set(deals?.map(deal => deal.outcome).filter(Boolean))];
+  // Get unique statuses and priorities for filters
+  const uniqueStatuses = [...new Set(tasks?.map(task => task.status).filter(Boolean))];
+  const uniquePriorities = [...new Set(tasks?.map(task => task.priority).filter(Boolean))];
 
   if (isLoading) {
     return (
@@ -99,7 +98,7 @@ const DealsPage = () => {
   if (error) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <p className="text-red-800">Error loading deals: {error.message}</p>
+        <p className="text-red-800">Error loading tasks: {error.message}</p>
       </div>
     );
   }
@@ -109,15 +108,15 @@ const DealsPage = () => {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Deals</h1>
-          <p className="text-gray-600">Manage your sales pipeline</p>
+          <h1 className="text-3xl font-bold text-gray-900">Tasks</h1>
+          <p className="text-gray-600">Manage your sales tasks and activities</p>
         </div>
         {isAdmin() && (
           <button
             onClick={() => setShowCreateModal(true)}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
           >
-            Add Deal
+            Add Task
           </button>
         )}
       </div>
@@ -128,7 +127,7 @@ const DealsPage = () => {
           <div className="md:col-span-2">
             <input
               type="text"
-              placeholder="Search deals by name or customer..."
+              placeholder="Search tasks by title or description..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -136,51 +135,51 @@ const DealsPage = () => {
           </div>
           <div>
             <select
-              value={stageFilter}
-              onChange={(e) => setStageFilter(e.target.value)}
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">All Stages</option>
-              {uniqueStages.map(stage => (
-                <option key={stage} value={stage}>{stage}</option>
+              <option value="">All Statuses</option>
+              {uniqueStatuses.map(status => (
+                <option key={status} value={status}>{status}</option>
               ))}
             </select>
           </div>
           <div>
             <select
-              value={outcomeFilter}
-              onChange={(e) => setOutcomeFilter(e.target.value)}
+              value={priorityFilter}
+              onChange={(e) => setPriorityFilter(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="">All Outcomes</option>
-              {uniqueOutcomes.map(outcome => (
-                <option key={outcome} value={outcome}>{outcome}</option>
+              <option value="">All Priorities</option>
+              {uniquePriorities.map(priority => (
+                <option key={priority} value={priority}>{priority}</option>
               ))}
             </select>
           </div>
         </div>
       </div>
 
-      {/* Deals Table */}
+      {/* Tasks Table */}
       <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Deal
+                  Task
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Customer
+                  Associated Deal
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Value
+                  Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Stage
+                  Priority
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Outcome
+                  Due Date
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
@@ -188,53 +187,58 @@ const DealsPage = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredDeals.length > 0 ? (
-                filteredDeals.map((deal) => (
-                  <tr key={deal.id} className="hover:bg-gray-50">
+              {filteredTasks.length > 0 ? (
+                filteredTasks.map((task) => (
+                  <tr key={task.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">
-                          {deal.name}
+                          {task.title}
                         </div>
                         <div className="text-sm text-gray-500">
-                          ID: {deal.id}
+                          {task.description}
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{deal.customer_name}</div>
-                      <div className="text-sm text-gray-500">{deal.customer_email}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        ${deal.value?.toLocaleString() || '0'}
+                      <div className="text-sm text-gray-900">
+                        {deals?.find(deal => deal.id === task.deal_id)?.name || 'No Deal'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
-                        {deal.stage || 'No Stage'}
+                      <span className={`px-2 py-1 text-xs rounded-full ${
+                        task.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        task.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
+                        task.status === 'pending' ? 'bg-gray-100 text-gray-800' :
+                        'bg-blue-100 text-blue-800'
+                      }`}>
+                        {task.status || 'Not Set'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 text-xs rounded-full ${
-                        deal.outcome === 'won' ? 'bg-green-100 text-green-800' :
-                        deal.outcome === 'lost' ? 'bg-red-100 text-red-800' :
+                        task.priority === 'high' ? 'bg-red-100 text-red-800' :
+                        task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                        task.priority === 'low' ? 'bg-green-100 text-green-800' :
                         'bg-gray-100 text-gray-800'
                       }`}>
-                        {deal.outcome || 'Open'}
+                        {task.priority || 'Not Set'}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {task.due_date ? new Date(task.due_date).toLocaleDateString() : 'No Due Date'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => handleEdit(deal)}
+                          onClick={() => handleEdit(task)}
                           className="text-blue-600 hover:text-blue-900"
                         >
                           Edit
                         </button>
                         {isAdmin() && (
                           <button
-                            onClick={() => handleDelete(deal.id)}
+                            onClick={() => handleDelete(task.id)}
                             className="text-red-600 hover:text-red-900"
                           >
                             Delete
@@ -247,7 +251,7 @@ const DealsPage = () => {
               ) : (
                 <tr>
                   <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
-                    {searchTerm || stageFilter || outcomeFilter ? 'No deals found matching your filters.' : 'No deals found.'}
+                    {searchTerm || statusFilter || priorityFilter ? 'No tasks found matching your filters.' : 'No tasks found.'}
                   </td>
                 </tr>
               )}
@@ -256,46 +260,46 @@ const DealsPage = () => {
         </div>
       </div>
 
-      {/* Create Deal Modal */}
+      {/* Create Task Modal */}
       {showCreateModal && (
-        <DealModal
+        <TaskModal
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
           onSubmit={handleCreate}
           isLoading={createMutation.isLoading}
-          title="Add New Deal"
-          stages={stages}
+          title="Add New Task"
+          deals={deals}
         />
       )}
 
-      {/* Edit Deal Modal */}
-      {showEditModal && editingDeal && (
-        <DealModal
+      {/* Edit Task Modal */}
+      {showEditModal && editingTask && (
+        <TaskModal
           isOpen={showEditModal}
           onClose={() => {
             setShowEditModal(false);
-            setEditingDeal(null);
+            setEditingTask(null);
           }}
-          onSubmit={(data) => handleUpdate(editingDeal.id, data)}
+          onSubmit={(data) => handleUpdate(editingTask.id, data)}
           isLoading={updateMutation.isLoading}
-          title="Edit Deal"
-          deal={editingDeal}
-          stages={stages}
+          title="Edit Task"
+          task={editingTask}
+          deals={deals}
         />
       )}
     </div>
   );
 };
 
-// Deal Modal Component
-const DealModal = ({ isOpen, onClose, onSubmit, isLoading, title, deal, stages }) => {
+// Task Modal Component
+const TaskModal = ({ isOpen, onClose, onSubmit, isLoading, title, task, deals }) => {
   const [formData, setFormData] = useState({
-    name: deal?.name || '',
-    customer_id: deal?.customer_id || '',
-    value: deal?.value || '',
-    stage: deal?.stage || '',
-    outcome: deal?.outcome || '',
-    description: deal?.description || '',
+    title: task?.title || '',
+    description: task?.description || '',
+    deal_id: task?.deal_id || '',
+    status: task?.status || 'pending',
+    priority: task?.priority || 'medium',
+    due_date: task?.due_date ? task.due_date.split('T')[0] : '',
   });
 
   const handleSubmit = (e) => {
@@ -320,76 +324,16 @@ const DealModal = ({ isOpen, onClose, onSubmit, isLoading, title, deal, stages }
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Deal Name *
+              Title *
             </label>
             <input
               type="text"
-              name="name"
-              value={formData.name}
+              name="title"
+              value={formData.title}
               onChange={handleChange}
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Customer ID *
-            </label>
-            <input
-              type="number"
-              name="customer_id"
-              value={formData.customer_id}
-              onChange={handleChange}
-              required
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Value ($)
-            </label>
-            <input
-              type="number"
-              name="value"
-              value={formData.value}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Stage
-            </label>
-            <select
-              name="stage"
-              value={formData.stage}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select Stage</option>
-              {stages?.map(stage => (
-                <option key={stage.id} value={stage.name}>{stage.name}</option>
-              ))}
-            </select>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Outcome
-            </label>
-            <select
-              name="outcome"
-              value={formData.outcome}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Open</option>
-              <option value="won">Won</option>
-              <option value="lost">Lost</option>
-            </select>
           </div>
           
           <div>
@@ -401,6 +345,68 @@ const DealModal = ({ isOpen, onClose, onSubmit, isLoading, title, deal, stages }
               value={formData.description}
               onChange={handleChange}
               rows="3"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Associated Deal
+            </label>
+            <select
+              name="deal_id"
+              value={formData.deal_id}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">Select Deal</option>
+              {deals?.map(deal => (
+                <option key={deal.id} value={deal.id}>{deal.name}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Status
+            </label>
+            <select
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="pending">Pending</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Priority
+            </label>
+            <select
+              name="priority"
+              value={formData.priority}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Due Date
+            </label>
+            <input
+              type="date"
+              name="due_date"
+              value={formData.due_date}
+              onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -427,4 +433,4 @@ const DealModal = ({ isOpen, onClose, onSubmit, isLoading, title, deal, stages }
   );
 };
 
-export default DealsPage; 
+export default TasksPage; 

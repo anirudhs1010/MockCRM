@@ -1,7 +1,11 @@
-// React application entry point
-// Should:
-// - Import React and ReactDOM
-// - Import App component
-// - Set up React Query client
-// - Render App to DOM
-// - Configure any global providers (Auth, Query, Router) 
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import './index.css';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+); 
