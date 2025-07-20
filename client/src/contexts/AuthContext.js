@@ -110,17 +110,6 @@ export const AuthProvider = ({ children }) => {
     }
   }, [authState?.isAuthenticated, user, loading, oktaAuth]);
 
-  const login = async () => {
-    console.log('AuthContext: Login called');
-    try {
-      console.log('AuthContext: Initiating sign in with redirect...');
-      await oktaAuth.signInWithRedirect();
-    } catch (error) {
-      console.error('AuthContext: Login error:', error);
-      setOktaError(`Failed to initiate login: ${error.message}`);
-    }
-  };
-
   const logout = async () => {
     console.log('AuthContext: Logout called');
     try {
@@ -145,11 +134,11 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     loading,
-    login,
     logout,
     isAdmin,
     isAuthenticated,
-    oktaError
+    oktaError,
+    oktaAuth
   };
 
   console.log('AuthContext: Current state', { user, loading, authState: authState?.isAuthenticated, oktaError });

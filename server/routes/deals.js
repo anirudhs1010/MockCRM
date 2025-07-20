@@ -12,7 +12,8 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../config/database');
-const { requireAuth, requireAdmin, canAccessDeal } = require('../middleware/roleMiddleware');
+const { requireAdmin, canAccessDeal } = require('../middleware/roleMiddleware');
+const { requireAuth } = require('../middleware/jwtMiddleware');
 
 // GET all deals (filtered by account and role)
 router.get('/', requireAuth, async (req, res) => {

@@ -1,4 +1,25 @@
 const API_BASE_URL = 'http://localhost:5000';
+
+// Helper function to get the access token from Okta
+const getAccessToken = async () => {
+  try {
+    // Import the auth context to get the oktaAuth instance
+    const { useAuth } = await import('../contexts/AuthContext');
+    const { oktaAuth } = useAuth();
+    
+    if (!oktaAuth) {
+      throw new Error('Okta auth not available');
+    }
+    
+    const tokenManager = oktaAuth.tokenManager;
+    const accessToken = await tokenManager.get('accessToken');
+    return accessToken ? accessToken.value : null;
+  } catch (error) {
+    console.error('Error getting access token:', error);
+    return null;
+  }
+};
+
 // Helper function to handle API responses
 const handleResponse = async (response) => {
   if (!response.ok) {
@@ -9,16 +30,59 @@ const handleResponse = async (response) => {
 };
 
 // Helper function to make authenticated requests
-const authenticatedRequest = async (endpoint, options = {}) => {
+const authenticatedRequest = async (endpoint, options = {}, oktaAuth) => {
   const url = `${API_BASE_URL}${endpoint}`;
+  
+  // Get the access token
+  let accessToken = null;
+  if (oktaAuth) {
+    try {
+      console.log('API: Getting token from oktaAuth:', !!oktaAuth);
+      console.log('API: Token manager available:', !!oktaAuth.tokenManager);
+      
+      const tokenManager = oktaAuth.tokenManager;
+      
+      // Try to get the access token first
+      const accessTokenObj = await tokenManager.get('accessToken');
+      console.log('API: Access token object:', accessTokenObj);
+      
+      if (accessTokenObj && accessTokenObj.accessToken) {
+        accessToken = accessTokenObj.accessToken;
+        console.log('API: Using access token for authentication');
+      } else {
+        // Fallback to ID token
+        const idTokenObj = await tokenManager.get('idToken');
+        console.log('API: ID token object:', idTokenObj);
+        
+        if (idTokenObj && idTokenObj.idToken) {
+          accessToken = idTokenObj.idToken;
+          console.log('API: Using ID token for authentication');
+        } else {
+          console.log('API: No tokens available in token manager');
+        }
+      }
+    } catch (error) {
+      console.error('API: Error getting token:', error);
+    }
+  } else {
+    console.log('API: No oktaAuth provided');
+  }
+  
+  if (!accessToken) {
+    throw new Error('No access token available');
+  }
+  
   const config = {
     ...options,
-    credentials: 'include', // Include cookies for session
     headers: {
       'Content-Type': 'application/json',
+      'Authorization': `Bearer ${accessToken}`,
       ...options.headers,
     },
   };
+  
+  console.log('API: Making request to:', url);
+  console.log('API: With authorization header:', `Bearer ${accessToken.substring(0, 20)}...`);
   
   try {
     const response = await fetch(url, config);
@@ -124,29 +188,29 @@ export const tasksAPI = {
 // Admin API
 export const adminAPI = {
   // Deal stages
-  getStages: () => authenticatedRequest('/api/admin/stages'),
-  createStage: (stageData) => authenticatedRequest('/api/admin/stages', {
+  getStages: (oktaAuth) => authenticatedRequest('/api/admin/stages', {}, oktaAuth),
+  createStage: (stageData, oktaAuth) => authenticatedRequest('/api/admin/stages', {
     method: 'POST',
     body: JSON.stringify(stageData),
-  }),
-  updateStage: (id, stageData) => authenticatedRequest(`/api/admin/stages/${id}`, {
+  }, oktaAuth),
+  updateStage: (id, stageData, oktaAuth) => authenticatedRequest(`/api/admin/stages/${id}`, {
     method: 'PUT',
     body: JSON.stringify(stageData),
-  }),
-  deleteStage: (id) => authenticatedRequest(`/api/admin/stages/${id}`, {
+  }, oktaAuth),
+  deleteStage: (id, oktaAuth) => authenticatedRequest(`/api/admin/stages/${id}`, {
     method: 'DELETE',
-  }),
+  }, oktaAuth),
   
   // Users
-  getUsers: () => authenticatedRequest('/api/admin/users'),
-  createUser: (userData) => authenticatedRequest('/api/admin/users', {
+  getUsers: (oktaAuth) => authenticatedRequest('/api/admin/users', {}, oktaAuth),
+  createUser: (userData, oktaAuth) => authenticatedRequest('/api/admin/users', {
     method: 'POST',
     body: JSON.stringify(userData),
-  }),
-  updateUser: (id, userData) => authenticatedRequest(`/api/admin/users/${id}`, {
+  }, oktaAuth),
+  updateUser: (id, userData, oktaAuth) => authenticatedRequest(`/api/admin/users/${id}`, {
     method: 'PUT',
     body: JSON.stringify(userData),
-  }),
+  }, oktaAuth),
 };
 
 // Health check

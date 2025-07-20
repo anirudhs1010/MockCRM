@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../config/database');
-const { requireAuth, requireAdmin, canAccessCustomer } = require('../middleware/roleMiddleware');
+const { requireAdmin, canAccessCustomer } = require('../middleware/roleMiddleware');
+const { requireAuth } = require('../middleware/jwtMiddleware');
 
 // GET all customers for the user's account
 router.get('/', requireAuth, async (req, res) => {

@@ -21,23 +21,13 @@ const PORT = process.env.PORT || 5000;
 app.locals.pool = pool;
 
 // Middleware setup
-app.use(cors());
-app.use(express.json());
-
-// Session middleware (must come before Passport)
-const session = require('express-session');
-app.use(session({
-  secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: true
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
-
-// Passport setup
-const passport = require('passport');
-require('./middleware/authMiddleware'); // Register the strategy
-
-app.use(passport.initialize());
-app.use(passport.session());
+app.use(express.json());
 
 // Import routes
 const dealsRoutes = require('./routes/deals');

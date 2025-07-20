@@ -4,8 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const Login = () => {
-  const { login, loading, user, oktaError } = useAuth();
-  const { authState } = useOktaAuth();
+  const { loading, user, oktaError } = useAuth();
+  const { oktaAuth, authState } = useOktaAuth();
   const navigate = useNavigate();
 
   console.log('Login component: Current state', { 
@@ -50,6 +50,15 @@ const Login = () => {
     );
   }
 
+  const handleLogin = async () => {
+    try {
+      console.log('Login: Initiating Okta sign in...');
+      await oktaAuth.signInWithRedirect();
+    } catch (error) {
+      console.error('Login: Error initiating sign in:', error);
+    }
+  };
+
   console.log('Login: Showing login form');
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -86,7 +95,7 @@ const Login = () => {
         <div className="mt-8 space-y-6">
           <div>
             <button
-              onClick={login}
+              onClick={handleLogin}
               disabled={loading}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >

@@ -1,8 +1,9 @@
 // Middleware for checking authentication and roles
+const pool = require('../config/database');
 
 // Check if user is authenticated
 const requireAuth = (req, res, next) => {
-  if (req.isAuthenticated()) {
+  if (req.user) {
     return next();
   }
   res.status(401).json({ error: 'Authentication required' });
@@ -10,7 +11,7 @@ const requireAuth = (req, res, next) => {
 
 // Check if user has admin role
 const requireAdmin = (req, res, next) => {
-  if (req.isAuthenticated() && req.user.role === 'admin') {
+  if (req.user && req.user.role === 'admin') {
     return next();
   }
   res.status(403).json({ error: 'Admin access required' });
@@ -18,7 +19,7 @@ const requireAdmin = (req, res, next) => {
 
 // Check if user is admin or owns the resource
 const requireAdminOrOwnership = (req, res, next) => {
-  if (!req.isAuthenticated()) {
+  if (!req.user) {
     return res.status(401).json({ error: 'Authentication required' });
   }
   
@@ -33,7 +34,7 @@ const requireAdminOrOwnership = (req, res, next) => {
 
 // Check if user can access a deal (admin or creator of the deal)
 const canAccessDeal = async (req, res, next) => {
-  if (!req.isAuthenticated()) {
+  if (!req.user) {
     return res.status(401).json({ error: 'Authentication required' });
   }
   
@@ -44,7 +45,7 @@ const canAccessDeal = async (req, res, next) => {
   // For non-admin users, check if they created the deal
   const dealId = req.params.id;
   try {
-    const result = await req.app.locals.pool.query(
+    const result = await pool.query(
       'SELECT * FROM deals WHERE id = $1 AND user_id = $2 AND account_id = $3',
       [dealId, req.user.id, req.user.account_id]
     );
@@ -62,7 +63,7 @@ const canAccessDeal = async (req, res, next) => {
 
 // Check if user can access a customer (admin or customer belongs to same account)
 const canAccessCustomer = async (req, res, next) => {
-  if (!req.isAuthenticated()) {
+  if (!req.user) {
     return res.status(401).json({ error: 'Authentication required' });
   }
   
@@ -73,7 +74,7 @@ const canAccessCustomer = async (req, res, next) => {
   // For non-admin users, check if customer belongs to their account
   const customerId = req.params.id;
   try {
-    const result = await req.app.locals.pool.query(
+    const result = await pool.query(
       'SELECT * FROM customers WHERE id = $1 AND account_id = $2',
       [customerId, req.user.account_id]
     );
@@ -91,7 +92,7 @@ const canAccessCustomer = async (req, res, next) => {
 
 // Check if user can access a task (admin or assigned to the task)
 const canAccessTask = async (req, res, next) => {
-  if (!req.isAuthenticated()) {
+  if (!req.user) {
     return res.status(401).json({ error: 'Authentication required' });
   }
   
@@ -102,7 +103,7 @@ const canAccessTask = async (req, res, next) => {
   // For non-admin users, check if they are assigned to the task
   const taskId = req.params.id;
   try {
-    const result = await req.app.locals.pool.query(
+    const result = await pool.query(
       'SELECT t.* FROM tasks t JOIN deals d ON t.deal_id = d.id WHERE t.id = $1 AND t.user_id = $2 AND d.account_id = $3',
       [taskId, req.user.id, req.user.account_id]
     );

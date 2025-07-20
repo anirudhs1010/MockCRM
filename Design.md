@@ -95,6 +95,29 @@ This section elaborates on any additional questions concerning the system.
 
 Security and Access Control: JWT-based authentication determines user's role and whether or not they have access to read or write such as { "id": "1234567890", "name": "John Doe", "admin": true }
 This case is for already used accounts, but for new accounts will need OAuth 2.0 to add new sales team accounts via email
+
+## Querying Logic and Database Access Patterns
+
+### Authentication Flow
+- **JWT Token Verification**: Uses Okta JWKS for token validation
+- **User Creation**: Automatically creates new users with default 'sales_rep' role when they first authenticate
+- **Account Isolation**: Each user belongs to an account, ensuring multi-tenant data isolation
+- **Role-Based Access**: Users can only access data within their account scope
+
+### Database Query Patterns
+- **Account-Scoped Queries**: All data queries include `account_id` filter for multi-tenant isolation
+- **Role-Based Filtering**: Sales reps see only their assigned deals/tasks, admins see all data within their account
+- **Consistent Error Handling**: All database operations include proper error handling and logging
+- **Connection Pooling**: Uses PostgreSQL connection pool for efficient database connections
+- **Global Stages**: Deal stages are global across all accounts (not account-specific) to maintain consistency in sales processes
+
+### Fixed Querying Issues
+- **Authentication Middleware**: Fixed inconsistent use of `req.isAuthenticated()` vs `req.user` across middleware
+- **Database Pool Access**: Standardized database pool access pattern across all middleware and routes
+- **User Creation Logic**: Improved user creation with fallback name extraction and proper default role assignment
+- **Role Middleware**: Fixed database access patterns in role-based access control middleware
+- **Admin API Schema Mismatch**: Fixed admin routes to use correct table name `stages` instead of `deal_stages` and removed account_id filtering since stages are global
+- **User Creation Schema**: Fixed admin user creation to include required `okta_id` field with temporary placeholder values
 Search and Filters: Will generate a unique SQL queries for filtering to Postgres based on indicated user actions and return filtered data accordingly in results for Deals or Accounts page
 Dashboard and Analytics: Will show win/loss ratio sorted by customer in pi chart, along with ratio of tasks completed to stage of sale
 Other Features: CSV export of tables for customers? 

@@ -17,6 +17,9 @@ import TasksPage from './pages/TasksPage';
 // Initialize Okta Auth
 const oktaAuth = new OktaAuth(oktaConfig);
 
+// Make oktaAuth available globally for API calls
+window.oktaAuth = oktaAuth;
+
 // Initialize React Query
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -90,9 +93,18 @@ function App() {
       <Router>
         <Security 
           oktaAuth={oktaAuth}
-          restoreOriginalUri={async (_oktaAuth, originalUri) => {
+          restoreOriginalUri={async (oktaAuth, originalUri) => {
             console.log('App: restoreOriginalUri called with:', originalUri);
-            window.location.replace(originalUri || '/dashboard');
+            // Use the navigate function instead of window.location
+            if (originalUri) {
+              window.location.replace(originalUri);
+            } else {
+              window.location.replace('/dashboard');
+            }
+          }}
+          onAuthRequired={async (oktaAuth) => {
+            console.log('App: onAuthRequired triggered');
+            await oktaAuth.signInWithRedirect();
           }}
         >
           <AuthProvider>

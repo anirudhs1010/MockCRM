@@ -1,17 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../config/database');
-const { requireAuth, requireAdmin } = require('../middleware/roleMiddleware');
+const { verifyToken, requireAuth, requireAdmin } = require('../middleware/jwtMiddleware');
 
-// Apply admin-only middleware to all routes
-router.use(requireAuth, requireAdmin);
+// Apply JWT authentication and admin-only middleware to all routes
+router.use(verifyToken, requireAdmin);
 
 // GET all deal stages
 router.get('/stages', async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM deal_stages WHERE account_id = $1 ORDER BY order_index',
-      [req.user.account_id]
+      'SELECT * FROM stages ORDER BY order_index',
+      []
     );
     res.json(result.rows);
   } catch (err) {
@@ -23,10 +23,10 @@ router.get('/stages', async (req, res) => {
 // POST new deal stage
 router.post('/stages', async (req, res) => {
   try {
-    const { name, order_index } = req.body;
+    const { name, description, order_index } = req.body;
     const result = await pool.query(
-      'INSERT INTO deal_stages (account_id, name, order_index) VALUES ($1, $2, $3) RETURNING *',
-      [req.user.account_id, name, order_index]
+      'INSERT INTO stages (name, description, order_index) VALUES ($1, $2, $3) RETURNING *',
+      [name, description || null, order_index || 0]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -39,11 +39,11 @@ router.post('/stages', async (req, res) => {
 router.put('/stages/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, order_index } = req.body;
+    const { name, description, order_index } = req.body;
     
     const result = await pool.query(
-      'UPDATE deal_stages SET name = $1, order_index = $2 WHERE id = $3 AND account_id = $4 RETURNING *',
-      [name, order_index, id, req.user.account_id]
+      'UPDATE stages SET name = $1, description = $2, order_index = $3 WHERE id = $4 RETURNING *',
+      [name, description || null, order_index || 0, id]
     );
     
     if (result.rows.length === 0) {
@@ -62,8 +62,8 @@ router.delete('/stages/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query(
-      'DELETE FROM deal_stages WHERE id = $1 AND account_id = $2 RETURNING *',
-      [id, req.user.account_id]
+      'DELETE FROM stages WHERE id = $1 RETURNING *',
+      [id]
     );
     
     if (result.rows.length === 0) {
@@ -97,10 +97,13 @@ router.post('/users', async (req, res) => {
     const { name, email, role } = req.body;
     
     // For now, create a placeholder user that can be activated later
-    // In a real app, you'd send an invitation email
+    // In a real app, you'd send an invitation email and they'd authenticate via Okta
+    // Generate a temporary okta_id for placeholder users
+    const tempOktaId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
     const result = await pool.query(
-      'INSERT INTO users (account_id, name, email, role) VALUES ($1, $2, $3, $4) RETURNING id, name, email, role, created_at',
-      [req.user.account_id, name, email, role || 'sales_rep']
+      'INSERT INTO users (account_id, okta_id, name, email, role) VALUES ($1, $2, $3, $4, $5) RETURNING id, name, email, role, created_at',
+      [req.user.account_id, tempOktaId, name, email, role || 'sales_rep']
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {

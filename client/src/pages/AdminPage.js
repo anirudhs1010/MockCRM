@@ -4,11 +4,12 @@ import { useAuth } from '../contexts/AuthContext';
 import { adminAPI } from '../services/api';
 
 const AdminPage = () => {
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, oktaAuth } = useAuth();
   const queryClient = useQueryClient();
   
   console.log('AdminPage: Current user:', user);
   console.log('AdminPage: isAdmin():', isAdmin());
+  console.log('AdminPage: oktaAuth available:', !!oktaAuth);
   
   // State for UI
   const [activeTab, setActiveTab] = useState('stages');
@@ -20,17 +21,22 @@ const AdminPage = () => {
   // Fetch data
   const { data: stages, isLoading: stagesLoading, error: stagesError } = useQuery({
     queryKey: ['stages'],
-    queryFn: adminAPI.getStages,
+    queryFn: () => adminAPI.getStages(oktaAuth),
+    enabled: !!oktaAuth, // Only run when oktaAuth is available
   });
 
   const { data: users, isLoading: usersLoading, error: usersError } = useQuery({
     queryKey: ['users'],
-    queryFn: adminAPI.getUsers,
+    queryFn: () => adminAPI.getUsers(oktaAuth),
+    enabled: !!oktaAuth, // Only run when oktaAuth is available
   });
 
   // Stage mutations
   const createStageMutation = useMutation({
-    mutationFn: adminAPI.createStage,
+    mutationFn: (data) => {
+      if (!oktaAuth) throw new Error('Authentication not ready');
+      return adminAPI.createStage(data, oktaAuth);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['stages']);
       setShowStageModal(false);
@@ -38,7 +44,10 @@ const AdminPage = () => {
   });
 
   const updateStageMutation = useMutation({
-    mutationFn: ({ id, data }) => adminAPI.updateStage(id, data),
+    mutationFn: ({ id, data }) => {
+      if (!oktaAuth) throw new Error('Authentication not ready');
+      return adminAPI.updateStage(id, data, oktaAuth);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['stages']);
       setShowStageModal(false);
@@ -47,7 +56,10 @@ const AdminPage = () => {
   });
 
   const deleteStageMutation = useMutation({
-    mutationFn: adminAPI.deleteStage,
+    mutationFn: (id) => {
+      if (!oktaAuth) throw new Error('Authentication not ready');
+      return adminAPI.deleteStage(id, oktaAuth);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['stages']);
     },
@@ -55,7 +67,10 @@ const AdminPage = () => {
 
   // User mutations
   const createUserMutation = useMutation({
-    mutationFn: adminAPI.createUser,
+    mutationFn: (data) => {
+      if (!oktaAuth) throw new Error('Authentication not ready');
+      return adminAPI.createUser(data, oktaAuth);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['users']);
       setShowUserModal(false);
@@ -63,7 +78,10 @@ const AdminPage = () => {
   });
 
   const updateUserMutation = useMutation({
-    mutationFn: ({ id, data }) => adminAPI.updateUser(id, data),
+    mutationFn: ({ id, data }) => {
+      if (!oktaAuth) throw new Error('Authentication not ready');
+      return adminAPI.updateUser(id, data, oktaAuth);
+    },
     onSuccess: () => {
       queryClient.invalidateQueries(['users']);
       setShowUserModal(false);

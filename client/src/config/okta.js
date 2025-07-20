@@ -5,12 +5,17 @@ const oktaConfig = {
   scopes: ['openid', 'profile', 'email'],
   pkce: true,
   disableHttpsCheck: process.env.NODE_ENV === 'development',
+  responseType: ['code'],
   // Add debugging
   onAuthRequired: () => {
     console.log('Okta: Auth required callback triggered');
   },
   onAuthResume: () => {
     console.log('Okta: Auth resume callback triggered');
+  },
+  // Add error handling
+  onAuthError: (error) => {
+    console.error('Okta: Authentication error:', error);
   }
 };
 
