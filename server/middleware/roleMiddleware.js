@@ -11,6 +11,10 @@ const requireAuth = (req, res, next) => {
 
 // Check if user has admin role
 const requireAdmin = (req, res, next) => {
+  if (process.env.NODE_ENV === 'development') {
+    // Always allow admin access in dev
+    return next();
+  }
   if (req.user && req.user.role === 'admin') {
     return next();
   }

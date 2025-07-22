@@ -54,7 +54,7 @@ const TasksPage = () => {
   // Filter tasks
   const filteredTasks = tasks?.filter(task => {
     const matchesSearch = 
-      task.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      task.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       task.description?.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = !statusFilter || task.status === statusFilter;
@@ -193,7 +193,7 @@ const TasksPage = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">
-                          {task.title}
+                          {task.name}
                         </div>
                         <div className="text-sm text-gray-500">
                           {task.description}
@@ -294,7 +294,7 @@ const TasksPage = () => {
 // Task Modal Component
 const TaskModal = ({ isOpen, onClose, onSubmit, isLoading, title, task, deals }) => {
   const [formData, setFormData] = useState({
-    title: task?.title || '',
+    name: task?.name || '',
     description: task?.description || '',
     deal_id: task?.deal_id || '',
     status: task?.status || 'pending',
@@ -324,12 +324,12 @@ const TaskModal = ({ isOpen, onClose, onSubmit, isLoading, title, task, deals })
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Title *
+              Name *
             </label>
             <input
               type="text"
-              name="title"
-              value={formData.title}
+              name="name"
+              value={formData.name}
               onChange={handleChange}
               required
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"

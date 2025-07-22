@@ -114,7 +114,20 @@ router.put('/:id', requireAuth, canAccessDeal, async (req, res) => {
 router.delete('/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query('DELETE FROM deals WHERE id = $1 AND account_id = $2 RETURNING *', [id, req.user.account_id]);
+    let result;
+    if (process.env.NODE_ENV === 'development') {
+      // In dev, allow deleting any deal regardless of account_id
+      result = await pool.query(
+        'DELETE FROM deals WHERE id = $1 RETURNING *',
+        [id]
+      );
+    } else {
+      // In prod, restrict to account_id
+      result = await pool.query(
+        'DELETE FROM deals WHERE id = $1 AND account_id = $2 RETURNING *',
+        [id, req.user.account_id]
+      );
+    }
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Deal not found' });
     }

@@ -31,8 +31,9 @@ const DashboardPage = () => {
   const lostDeals = deals?.filter(deal => deal.outcome === 'lost').length || 0;
   const openDeals = deals?.filter(deal => !deal.outcome).length || 0;
 
-  const completedTasks = tasks?.filter(task => task.status === 'completed').length || 0;
-  const pendingTasks = tasks?.filter(task => task.status === 'pending').length || 0;
+  // Update task completion metrics to use correct status values
+  const completedTasks = tasks?.filter(task => task.status === 'done').length || 0;
+  const pendingTasks = tasks?.filter(task => task.status === 'todo' || task.status === 'in_progress').length || 0;
 
   const winRate = totalDeals > 0 ? ((wonDeals / totalDeals) * 100).toFixed(1) : 0;
   const taskCompletionRate = totalTasks > 0 ? ((completedTasks / totalTasks) * 100).toFixed(1) : 0;
@@ -203,7 +204,7 @@ const DashboardPage = () => {
                 <div key={deal.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div>
                     <p className="font-medium text-gray-900">{deal.name}</p>
-                    <p className="text-sm text-gray-600">${deal.value?.toLocaleString() || '0'}</p>
+                    <p className="text-sm text-gray-600">${deal.amount?.toLocaleString() || '0'}</p>
                   </div>
                   <span className={`px-2 py-1 text-xs rounded-full ${
                     deal.outcome === 'won' ? 'bg-green-100 text-green-800' :
@@ -227,12 +228,12 @@ const DashboardPage = () => {
               recentTasks.map((task) => (
                 <div key={task.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div>
-                    <p className="font-medium text-gray-900">{task.title}</p>
+                    <p className="font-medium text-gray-900">{task.name}</p>
                     <p className="text-sm text-gray-600">{task.description}</p>
                   </div>
                   <span className={`px-2 py-1 text-xs rounded-full ${
-                    task.status === 'completed' ? 'bg-green-100 text-green-800' :
-                    task.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                    task.status === 'done' ? 'bg-green-100 text-green-800' :
+                    task.status === 'todo' || task.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
                     'bg-gray-100 text-gray-800'
                   }`}>
                     {task.status}

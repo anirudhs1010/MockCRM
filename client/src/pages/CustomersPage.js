@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
 import { customersAPI } from '../services/api';
 
 const CustomersPage = () => {
-  const { isAdmin } = useAuth();
+  // TODO: For local/dev use only - bypass Okta and always allow admin actions. Restore secure authentication for production use.
+  const isAdmin = () => true;
   const queryClient = useQueryClient();
   
   // State for UI
@@ -16,12 +16,13 @@ const CustomersPage = () => {
   // Fetch customers
   const { data: customers, isLoading, error } = useQuery({
     queryKey: ['customers'],
-    queryFn: customersAPI.getAll,
+    // For local/dev, call API without auth
+    queryFn: () => customersAPI.getAll(),
   });
 
   // Mutations
   const createMutation = useMutation({
-    mutationFn: customersAPI.create,
+    mutationFn: (formData) => customersAPI.create(formData),
     onSuccess: () => {
       queryClient.invalidateQueries(['customers']);
       setShowCreateModal(false);
@@ -38,7 +39,7 @@ const CustomersPage = () => {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: customersAPI.delete,
+    mutationFn: (id) => customersAPI.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries(['customers']);
     },
@@ -109,14 +110,12 @@ const CustomersPage = () => {
           <h1 className="text-3xl font-bold text-gray-900">Customers</h1>
           <p className="text-gray-600">Manage your customer relationships</p>
         </div>
-        {isAdmin() && (
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Add Customer
-          </button>
-        )}
+        <button
+          onClick={() => setShowCreateModal(true)}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          Add Customer
+        </button>
       </div>
 
       {/* Search and Filters */}

@@ -22,7 +22,23 @@ const getKey = (header, callback) => {
 };
 
 // Verify JWT token middleware
-const verifyToken = (req, res, next) => {
+const verifyToken = async (req, res, next) => {
+  if (process.env.NODE_ENV === 'development') {
+    // DEV MODE: Bypass Okta, use first admin user from DB
+    try {
+      const userResult = await pool.query(
+        "SELECT * FROM users WHERE role = 'admin' LIMIT 1"
+      );
+      if (userResult.rows.length > 0) {
+        req.user = userResult.rows[0];
+        return next();
+      } else {
+        return res.status(401).json({ error: 'No admin user found in DB' });
+      }
+    } catch (err) {
+      return res.status(500).json({ error: 'DB error in dev mode' });
+    }
+  }
   const authHeader = req.headers.authorization;
   
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -92,7 +108,28 @@ const requireAdmin = (req, res, next) => {
 };
 
 // Check if user is authenticated
-const requireAuth = (req, res, next) => {
+const requireAuth = async (req, res, next) => {
+  if (process.env.NODE_ENV === 'development') {
+    try {
+      // Find any user in the DB
+      const result = await pool.query('SELECT * FROM users LIMIT 1');
+      let user;
+      if (result.rows.length > 0) {
+        user = result.rows[0];
+      } else {
+        // If no user exists, create one
+        const insert = await pool.query(
+          "INSERT INTO users (account_id, okta_id, email, name, role) VALUES (1, 'dev-okta', 'dev@example.com', 'Dev User', 'admin') RETURNING *"
+        );
+        user = insert.rows[0];
+      }
+      req.user = user;
+      return next();
+    } catch (err) {
+      console.error('Dev auth error:', err);
+      return res.status(500).send('Dev auth error');
+    }
+  }
   if (req.user) {
     return next();
   }

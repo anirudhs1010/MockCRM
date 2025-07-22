@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../config/database');
 const { requireAdmin, canAccessCustomer } = require('../middleware/roleMiddleware');
-const { requireAuth } = require('../middleware/jwtMiddleware');
+const { verifyToken, requireAuth } = require('../middleware/jwtMiddleware');
 
 // GET all customers for the user's account
-router.get('/', requireAuth, async (req, res) => {
+router.get('/', verifyToken, requireAuth, async (req, res) => {
   try {
     const result = await pool.query(
       'SELECT * FROM customers WHERE account_id = $1 ORDER BY created_at DESC',
@@ -39,7 +39,7 @@ router.get('/:id', requireAuth, canAccessCustomer, async (req, res) => {
 });
 
 // POST new customer
-router.post('/', requireAuth, async (req, res) => {
+router.post('/', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { name, email, phone } = req.body;
     const result = await pool.query(
@@ -79,15 +79,23 @@ router.put('/:id', requireAuth, canAccessCustomer, async (req, res) => {
 router.delete('/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const result = await pool.query(
-      'DELETE FROM customers WHERE id = $1 AND account_id = $2 RETURNING *',
-      [id, req.user.account_id]
-    );
-    
+    let result;
+    if (process.env.NODE_ENV === 'development') {
+      // In dev, allow deleting any customer regardless of account_id
+      result = await pool.query(
+        'DELETE FROM customers WHERE id = $1 RETURNING *',
+        [id]
+      );
+    } else {
+      // In prod, restrict to account_id
+      result = await pool.query(
+        'DELETE FROM customers WHERE id = $1 AND account_id = $2 RETURNING *',
+        [id, req.user.account_id]
+      );
+    }
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Customer not found' });
     }
-    
     res.json({ message: 'Customer deleted successfully' });
   } catch (err) {
     console.error(err);

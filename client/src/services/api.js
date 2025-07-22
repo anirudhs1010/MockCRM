@@ -95,6 +95,9 @@ const authenticatedRequest = async (endpoint, options = {}, oktaAuth) => {
   }
 };
 
+// Add at the top of api.js
+const isDev = process.env.NODE_ENV === 'development';
+
 // Auth API
 export const authAPI = {
   // Get authentication status
@@ -106,111 +109,240 @@ export const authAPI = {
 
 // Deals API
 export const dealsAPI = {
-  // Get all deals
-  getAll: () => authenticatedRequest('/api/deals'),
-  
-  // Get single deal
-  getById: (id) => authenticatedRequest(`/api/deals/${id}`),
-  
-  // Create new deal
-  create: (dealData) => authenticatedRequest('/api/deals', {
-    method: 'POST',
-    body: JSON.stringify(dealData),
-  }),
-  
-  // Update deal
-  update: (id, dealData) => authenticatedRequest(`/api/deals/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(dealData),
-  }),
-  
-  // Delete deal
-  delete: (id) => authenticatedRequest(`/api/deals/${id}`, {
-    method: 'DELETE',
-  }),
+  getAll: (oktaAuth) => {
+    if (isDev) {
+      return fetch(`${API_BASE_URL}/api/deals`).then(handleResponse);
+    }
+    return authenticatedRequest('/api/deals', {}, oktaAuth);
+  },
+  getById: (id, oktaAuth) => {
+    if (isDev) {
+      return fetch(`${API_BASE_URL}/api/deals/${id}`).then(handleResponse);
+    }
+    return authenticatedRequest(`/api/deals/${id}`, {}, oktaAuth);
+  },
+  create: (dealData, oktaAuth) => {
+    if (isDev) {
+      return fetch(`${API_BASE_URL}/api/deals`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dealData),
+      }).then(handleResponse);
+    }
+    return authenticatedRequest('/api/deals', {
+      method: 'POST',
+      body: JSON.stringify(dealData),
+    }, oktaAuth);
+  },
+  update: (id, dealData, oktaAuth) => {
+    if (isDev) {
+      return fetch(`${API_BASE_URL}/api/deals/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dealData),
+      }).then(handleResponse);
+    }
+    return authenticatedRequest(`/api/deals/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(dealData),
+    }, oktaAuth);
+  },
+  delete: (id, oktaAuth) => {
+    if (isDev) {
+      return fetch(`${API_BASE_URL}/api/deals/${id}`, {
+        method: 'DELETE',
+      }).then(handleResponse);
+    }
+    return authenticatedRequest(`/api/deals/${id}`, {
+      method: 'DELETE',
+    }, oktaAuth);
+  },
 };
 
 // Customers API
 export const customersAPI = {
-  // Get all customers
-  getAll: () => authenticatedRequest('/api/customers'),
+  getAll: (oktaAuth) => {
+    if (isDev) {
+      return fetch(`${API_BASE_URL}/api/customers`).then(handleResponse);
+    }
+    return authenticatedRequest('/api/customers', {}, oktaAuth);
+  },
   
   // Get single customer
-  getById: (id) => authenticatedRequest(`/api/customers/${id}`),
+  getById: (id, oktaAuth) => authenticatedRequest(`/api/customers/${id}`, {}, oktaAuth),
   
   // Create new customer
-  create: (customerData) => authenticatedRequest('/api/customers', {
-    method: 'POST',
-    body: JSON.stringify(customerData),
-  }),
+  create: (customerData, oktaAuth) => {
+    if (isDev) {
+      return fetch(`${API_BASE_URL}/api/customers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(customerData),
+      }).then(handleResponse);
+    }
+    return authenticatedRequest('/api/customers', {
+      method: 'POST',
+      body: JSON.stringify(customerData),
+    }, oktaAuth);
+  },
   
   // Update customer
-  update: (id, customerData) => authenticatedRequest(`/api/customers/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(customerData),
-  }),
+  update: (id, customerData, oktaAuth) => {
+    if (isDev) {
+      return fetch(`${API_BASE_URL}/api/customers/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(customerData),
+      }).then(handleResponse);
+    }
+    return authenticatedRequest(`/api/customers/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(customerData),
+    }, oktaAuth);
+  },
   
   // Delete customer
-  delete: (id) => authenticatedRequest(`/api/customers/${id}`, {
-    method: 'DELETE',
-  }),
+  delete: (id, oktaAuth) => {
+    if (isDev) {
+      return fetch(`${API_BASE_URL}/api/customers/${id}`, {
+        method: 'DELETE',
+      }).then(handleResponse);
+    }
+    return authenticatedRequest(`/api/customers/${id}`, {
+      method: 'DELETE',
+    }, oktaAuth);
+  },
 };
 
 // Tasks API
 export const tasksAPI = {
-  // Get all tasks
-  getAll: (filters = {}) => {
+  getAll: (filters = {}, oktaAuth) => {
     const params = new URLSearchParams(filters);
-    return authenticatedRequest(`/api/tasks?${params}`);
+    if (isDev) {
+      return fetch(`${API_BASE_URL}/api/tasks?${params}`).then(handleResponse);
+    }
+    return authenticatedRequest(`/api/tasks?${params}`, {}, oktaAuth);
   },
-  
-  // Get single task
-  getById: (id) => authenticatedRequest(`/api/tasks/${id}`),
-  
-  // Create new task
-  create: (taskData) => authenticatedRequest('/api/tasks', {
-    method: 'POST',
-    body: JSON.stringify(taskData),
-  }),
-  
-  // Update task
-  update: (id, taskData) => authenticatedRequest(`/api/tasks/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(taskData),
-  }),
-  
-  // Delete task
-  delete: (id) => authenticatedRequest(`/api/tasks/${id}`, {
-    method: 'DELETE',
-  }),
+  getById: (id, oktaAuth) => {
+    if (isDev) {
+      return fetch(`${API_BASE_URL}/api/tasks/${id}`).then(handleResponse);
+    }
+    return authenticatedRequest(`/api/tasks/${id}`, {}, oktaAuth);
+  },
+  create: (taskData, oktaAuth) => {
+    if (isDev) {
+      return fetch(`${API_BASE_URL}/api/tasks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(taskData),
+      }).then(handleResponse);
+    }
+    return authenticatedRequest('/api/tasks', {
+      method: 'POST',
+      body: JSON.stringify(taskData),
+    }, oktaAuth);
+  },
+  update: (id, taskData, oktaAuth) => {
+    if (isDev) {
+      return fetch(`${API_BASE_URL}/api/tasks/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(taskData),
+      }).then(handleResponse);
+    }
+    return authenticatedRequest(`/api/tasks/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(taskData),
+    }, oktaAuth);
+  },
+  delete: (id, oktaAuth) => {
+    if (isDev) {
+      return fetch(`${API_BASE_URL}/api/tasks/${id}`, {
+        method: 'DELETE',
+      }).then(handleResponse);
+    }
+    return authenticatedRequest(`/api/tasks/${id}`, {
+      method: 'DELETE',
+    }, oktaAuth);
+  },
 };
 
 // Admin API
 export const adminAPI = {
-  // Deal stages
-  getStages: (oktaAuth) => authenticatedRequest('/api/admin/stages', {}, oktaAuth),
-  createStage: (stageData, oktaAuth) => authenticatedRequest('/api/admin/stages', {
-    method: 'POST',
-    body: JSON.stringify(stageData),
-  }, oktaAuth),
-  updateStage: (id, stageData, oktaAuth) => authenticatedRequest(`/api/admin/stages/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(stageData),
-  }, oktaAuth),
-  deleteStage: (id, oktaAuth) => authenticatedRequest(`/api/admin/stages/${id}`, {
-    method: 'DELETE',
-  }, oktaAuth),
-  
-  // Users
-  getUsers: (oktaAuth) => authenticatedRequest('/api/admin/users', {}, oktaAuth),
-  createUser: (userData, oktaAuth) => authenticatedRequest('/api/admin/users', {
-    method: 'POST',
-    body: JSON.stringify(userData),
-  }, oktaAuth),
-  updateUser: (id, userData, oktaAuth) => authenticatedRequest(`/api/admin/users/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(userData),
-  }, oktaAuth),
+  getStages: (oktaAuth) => {
+    if (isDev) {
+      return fetch(`${API_BASE_URL}/api/admin/stages`).then(handleResponse);
+    }
+    return authenticatedRequest('/api/admin/stages', {}, oktaAuth);
+  },
+  createStage: (stageData, oktaAuth) => {
+    if (isDev) {
+      return fetch(`${API_BASE_URL}/api/admin/stages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(stageData),
+      }).then(handleResponse);
+    }
+    return authenticatedRequest('/api/admin/stages', {
+      method: 'POST',
+      body: JSON.stringify(stageData),
+    }, oktaAuth);
+  },
+  updateStage: (id, stageData, oktaAuth) => {
+    if (isDev) {
+      return fetch(`${API_BASE_URL}/api/admin/stages/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(stageData),
+      }).then(handleResponse);
+    }
+    return authenticatedRequest(`/api/admin/stages/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(stageData),
+    }, oktaAuth);
+  },
+  deleteStage: (id, oktaAuth) => {
+    if (isDev) {
+      return fetch(`${API_BASE_URL}/api/admin/stages/${id}`, {
+        method: 'DELETE',
+      }).then(handleResponse);
+    }
+    return authenticatedRequest(`/api/admin/stages/${id}`, {
+      method: 'DELETE',
+    }, oktaAuth);
+  },
+  getUsers: (oktaAuth) => {
+    if (isDev) {
+      return fetch(`${API_BASE_URL}/api/admin/users`).then(handleResponse);
+    }
+    return authenticatedRequest('/api/admin/users', {}, oktaAuth);
+  },
+  createUser: (userData, oktaAuth) => {
+    if (isDev) {
+      return fetch(`${API_BASE_URL}/api/admin/users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+      }).then(handleResponse);
+    }
+    return authenticatedRequest('/api/admin/users', {
+      method: 'POST',
+      body: JSON.stringify(userData),
+    }, oktaAuth);
+  },
+  updateUser: (id, userData, oktaAuth) => {
+    if (isDev) {
+      return fetch(`${API_BASE_URL}/api/admin/users/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+      }).then(handleResponse);
+    }
+    return authenticatedRequest(`/api/admin/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(userData),
+    }, oktaAuth);
+  },
 };
 
 // Health check

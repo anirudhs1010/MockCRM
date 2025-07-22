@@ -207,7 +207,7 @@ const DealsPage = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
-                        ${deal.value?.toLocaleString() || '0'}
+                        ${deal.amount?.toLocaleString() || '0'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -292,7 +292,7 @@ const DealModal = ({ isOpen, onClose, onSubmit, isLoading, title, deal, stages }
   const [formData, setFormData] = useState({
     name: deal?.name || '',
     customer_id: deal?.customer_id || '',
-    value: deal?.value || '',
+    amount: deal?.amount || '',
     stage: deal?.stage || '',
     outcome: deal?.outcome || '',
     description: deal?.description || '',
@@ -300,7 +300,12 @@ const DealModal = ({ isOpen, onClose, onSubmit, isLoading, title, deal, stages }
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(formData);
+    const payload = {
+      ...formData,
+      amount: Number(formData.amount), // ensure it's a number
+    };
+    delete payload.amount;
+    onSubmit(payload);
   };
 
   const handleChange = (e) => {
@@ -352,9 +357,11 @@ const DealModal = ({ isOpen, onClose, onSubmit, isLoading, title, deal, stages }
             </label>
             <input
               type="number"
-              name="value"
-              value={formData.value}
+              name="amount"
+              value={formData.amount}
               onChange={handleChange}
+              required
+              min="0"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
