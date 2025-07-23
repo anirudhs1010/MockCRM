@@ -356,7 +356,7 @@ const AdminPage = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`px-2 py-1 text-xs rounded-full ${
                           user.role === 'admin' ? 'bg-red-100 text-red-800' :
-                          user.role === 'sales' ? 'bg-blue-100 text-blue-800' :
+                          user.role === 'sales_rep' ? 'bg-blue-100 text-blue-800' :
                           'bg-gray-100 text-gray-800'
                         }`}>
                           {user.role}
@@ -523,7 +523,7 @@ const UserModal = ({ isOpen, onClose, onSubmit, isLoading, title, user }) => {
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
-    role: user?.role || 'sales',
+    role: user?.role || 'sales_rep',
     status: user?.status || 'active',
   });
 
@@ -585,7 +585,7 @@ const UserModal = ({ isOpen, onClose, onSubmit, isLoading, title, user }) => {
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="sales">Sales</option>
+              <option value="sales_rep">Sales Rep</option>
               <option value="admin">Admin</option>
             </select>
           </div>

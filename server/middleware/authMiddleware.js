@@ -29,9 +29,14 @@ passport.use('okta', new Strategy({
       
       // For now, create a new account for each user
       // In a real app, you might want to invite users to existing accounts
+      let displayName = profile.displayName;
+      if (!displayName || displayName === 'undefined' || displayName.trim() === '') {
+        // fallback to email prefix
+        displayName = profile.emails && profile.emails[0] && profile.emails[0].value ? profile.emails[0].value.split('@')[0] : 'User';
+      }
       const accountResult = await pool.query(
         'INSERT INTO accounts (name) VALUES ($1) RETURNING id',
-        [`${profile.displayName}'s Account`]
+        [`${displayName}'s Account`]
       );
       accountId = accountResult.rows[0].id;
 

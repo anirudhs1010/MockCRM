@@ -74,7 +74,7 @@ describe('Tasks Routes', () => {
     it('should return all tasks for admin user', async () => {
       const mockTasks = [
         { id: 1, name: 'Task 1', deal_name: 'Deal 1', user_name: 'User 1', status: 'todo' },
-        { id: 2, name: 'Task 2', deal_name: 'Deal 2', user_name: 'User 2', status: 'completed' },
+        { id: 2, name: 'Task 2', deal_name: 'Deal 2', user_name: 'User 2', status: 'done' },
       ];
       pool.query.mockResolvedValue({ rows: mockTasks });
 
@@ -122,17 +122,17 @@ describe('Tasks Routes', () => {
 
     it('should filter tasks by status for sales rep user', async () => {
       const mockTasks = [
-        { id: 1, name: 'Task 1', deal_name: 'Deal 1', user_name: 'User 2', status: 'completed' },
+        { id: 1, name: 'Task 1', deal_name: 'Deal 1', user_name: 'User 2', status: 'done' },
       ];
       pool.query.mockResolvedValue({ rows: mockTasks });
 
-      const response = await request(salesRepApp).get('/api/tasks?status=completed');
+      const response = await request(salesRepApp).get('/api/tasks?status=done');
       
       expect(response.status).toBe(200);
       expect(response.body).toEqual(mockTasks);
       expect(pool.query).toHaveBeenCalledWith(
         expect.stringContaining('AND t.status = $3'),
-        [100, 2, 'completed']
+        [100, 2, 'done']
       );
     });
 
@@ -278,7 +278,7 @@ describe('Tasks Routes', () => {
 
   describe('PUT /api/tasks/:id', () => {
     it('should update task for admin user', async () => {
-      const updateData = { name: 'Updated Task', due_date: '2024-02-01', status: 'completed', user_id: 1 };
+      const updateData = { name: 'Updated Task', due_date: '2024-02-01', status: 'done', user_id: 1 };
       const updatedTask = { id: 1, ...updateData };
       pool.query.mockResolvedValue({ rows: [updatedTask] });
 
@@ -288,7 +288,7 @@ describe('Tasks Routes', () => {
       expect(response.body).toEqual(updatedTask);
       expect(pool.query).toHaveBeenCalledWith(
         'UPDATE tasks SET name = $1, due_date = $2, status = $3, user_id = $4, updated_at = CURRENT_TIMESTAMP WHERE id = $5 RETURNING *',
-        ['Updated Task', '2024-02-01', 'completed', 1, '1']
+        ['Updated Task', '2024-02-01', 'done', 1, '1']
       );
     });
 

@@ -207,7 +207,7 @@ const TasksPage = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 py-1 text-xs rounded-full ${
-                        task.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        task.status === 'done' ? 'bg-green-100 text-green-800' :
                         task.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
                         task.status === 'pending' ? 'bg-gray-100 text-gray-800' :
                         'bg-blue-100 text-blue-800'
@@ -378,7 +378,7 @@ const TaskModal = ({ isOpen, onClose, onSubmit, isLoading, title, task, deals })
             >
               <option value="pending">Pending</option>
               <option value="in_progress">In Progress</option>
-              <option value="completed">Completed</option>
+              <option value="done">Done</option>
             </select>
           </div>
           

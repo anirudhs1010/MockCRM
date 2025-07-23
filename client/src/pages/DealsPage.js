@@ -304,7 +304,6 @@ const DealModal = ({ isOpen, onClose, onSubmit, isLoading, title, deal, stages }
       ...formData,
       amount: Number(formData.amount), // ensure it's a number
     };
-    delete payload.amount;
     onSubmit(payload);
   };
 
@@ -353,7 +352,7 @@ const DealModal = ({ isOpen, onClose, onSubmit, isLoading, title, deal, stages }
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Value ($)
+              Amount ($)
             </label>
             <input
               type="number"

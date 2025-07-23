@@ -74,8 +74,10 @@ const verifyToken = async (req, res, next) => {
         
         // Extract name from email or use a default
         const emailName = decoded.sub.split('@')[0];
-        const displayName = decoded.name || emailName;
-        
+        let displayName = decoded.name;
+        if (!displayName || displayName === 'undefined' || displayName.trim() === '') {
+          displayName = emailName;
+        }
         // Create a new account for the user
         const accountResult = await pool.query(
           'INSERT INTO accounts (name) VALUES ($1) RETURNING id',
