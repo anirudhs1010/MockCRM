@@ -183,3 +183,18 @@ REACT_APP_OKTA_CLIENT_ID=your_client_id_here
 ```
 
 ---
+
+# Current Database State (as of latest inspection)
+
+## Table Overview
+- **accounts**: Table exists. All account names are currently set to "undefined's Account" (likely a bug in account creation logic). 10 rows present.
+- **users**: Table exists. 1 user present, role is 'admin', account_id matches an account.
+- **customers**: Table exists. 1 customer present, account_id matches, data valid.
+- **stages**: Table exists. Only two stages ('won', 'lost') are present and active. Other default stages (e.g., 'Prospecting', 'Qualified', etc.) are missing from the data.
+- **deals**: Table exists. 1 deal present, outcome is 'won', foreign keys match existing records.
+- **tasks**: Table exists. 1 task present, status is 'in_progress', deal_id matches existing deal.
+
+## Observed Discrepancies and Bugs
+- All account names are set to "undefined's Account". This is likely a bug in the account creation logic and should be fixed.
+- Only two deal stages are present; the rest of the default stages described in the design are missing. Consider re-inserting all default stages if the full sales pipeline is desired.
+- Data is sparse, but the schema matches the intended design.
