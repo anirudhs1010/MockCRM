@@ -97,20 +97,23 @@ Security and Access Control: JWT-based authentication determines user's role and
 This case is for already used accounts, but for new accounts will need email-based registration to add new sales team accounts
 
 ### Role-Based Navigation Access
-- **Admin Users**: Can access Dashboard, Customers, Deals, and Tasks pages
+- **Admin Users**: Can access Dashboard, Customers, Deals, Tasks, and Admin pages
   - Can view, create, edit, and delete customers
-- **Sales Users**: Can access Dashboard, Customers, Deals, Tasks, and Admin pages
+  - Can create, edit, and delete users
+  - Can manage deal stages
+- **Sales Users**: Can access Dashboard, Customers, Deals, and Tasks pages
   - Can view, create, and edit customers (cannot delete)
+  - Cannot access Admin panel
 - **Route Protection**: 
   - `/customers` route is accessible to all authenticated users
-  - `/admin` route is protected with `adminOnly` - only admin users can access (though this may be reversed based on current implementation)
+  - `/admin` route is protected with `adminOnly` - only admin users can access
   - All other routes are accessible to authenticated users
 
 ## Querying Logic and Database Access Patterns
 
 ### Authentication Flow
 - **JWT Token Verification**: Uses JWT tokens for authentication with bcrypt password hashing
-- **User Registration**: Users can register with email, password, and name, automatically creating an account
+- **Invite-Only Registration**: Users can only register if they have been pre-created by an admin
 - **Account Isolation**: Each user belongs to an account, ensuring multi-tenant data isolation
 - **Role-Based Access**: Users can only access data within their account scope
 
@@ -146,6 +149,26 @@ Have two accounts one with salesperson A with sales permission and salesperson B
 While logged into salesperson A, check if a deal in "Deals" page can be deleted - should not be allowed (sale teams permission)
 While logging into salesperson B, deal should be deleted 
 Additionally all dashboard/analytics should be updated accordingly - pi chart with w/l ratio for now - can add additional functionality for it
+
+## Recent Authentication System Improvements
+
+### Development Mode Fixes
+- **Removed automatic user creation** in development mode
+- **Removed development bypasses** from ProtectedRoute component
+- **Real authentication now works** in development environment
+- **Proper login/logout flow** implemented
+
+### Access Control Updates
+- **Fixed Admin tab visibility** - now only shows for admin users
+- **Corrected role-based navigation** - admin users see Admin tab, sales users don't
+- **Proper route protection** - all routes now require authentication
+- **Role-based UI elements** - delete buttons only visible to appropriate users
+
+### User Management Enhancements
+- **Admin user deletion** - admins can delete any user except themselves
+- **Invite-only registration** - prevents unauthorized user creation
+- **Secure user creation** - only admins can create new user accounts
+- **Self-protection mechanisms** - prevents accidental self-deletion
 
 ## TODO: E2E Testing for Authentication
 - **REMINDER:** Implement E2E tests with real browser (Cypress/Playwright) for authentication flow
@@ -187,6 +210,45 @@ DB_PORT=5432
 ## Security Features
 - **Password Hashing**: bcrypt with 10 salt rounds
 - **JWT Tokens**: 24-hour expiration
+- **Invite-Only System**: Only admins can create new user accounts
+- **Self-Protection**: Admins cannot delete their own accounts
+
+## Admin User Management System
+
+### User Creation (Admin-Only)
+- **Endpoint**: `POST /auth/admin/create-user`
+- **Access**: Admin users only
+- **Process**: 
+  1. Admin creates user account with email, name, and role
+  2. User account is created without password (password_hash = NULL)
+  3. User receives invitation and can register with their email
+  4. User sets their own password during registration
+
+### User Registration (Invite-Only)
+- **Endpoint**: `POST /auth/register`
+- **Access**: Pre-created users only
+- **Process**:
+  1. User attempts to register with their email
+  2. System checks if email exists in database
+  3. System checks if password_hash is NULL (not set yet)
+  4. If both conditions met, user can set password and complete registration
+  5. If email doesn't exist: "You must be invited by an administrator"
+  6. If password already set: "User already exists"
+
+### User Deletion (Admin-Only)
+- **Endpoint**: `DELETE /auth/admin/users/:userId`
+- **Access**: Admin users only
+- **Features**:
+  - Admin can delete any user except themselves
+  - Admin can delete other admins
+  - Proper error handling and confirmation
+  - Automatic user list refresh after deletion
+
+### Admin Panel Features
+- **User Management**: View, create, edit, and delete users
+- **Deal Stages Management**: Create, edit, and delete deal stages
+- **Role-Based UI**: Delete buttons only visible to admin users
+- **Real-time Updates**: User list refreshes after operations
 - **Account Isolation**: Multi-tenant architecture maintained
 - **Role-Based Access**: Admin and sales_rep roles supported
 
