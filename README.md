@@ -2,33 +2,33 @@
 
 A modern, full-stack CRM application built with Node.js/Express backend and React frontend, featuring role-based access control, invite-only user registration, and comprehensive business management tools.
 
-## 🚀 Features
+## Features
 
-### 🔐 **Authentication & Security**
+### Authentication & Security
 - **JWT-based authentication** with bcrypt password hashing
 - **Invite-only registration system** - only admins can create new user accounts
 - **Role-based access control** (Admin & Sales Rep)
 - **Protected routes** with proper middleware
 - **Self-protection mechanisms** - admins cannot delete their own accounts
 
-### 👥 **User Management**
+### User Management
 - **Admin-only user creation** - invite users by email
 - **User role management** - assign admin or sales rep roles
 - **User deletion** - admins can delete any user except themselves
 - **Account isolation** - multi-tenant architecture
 
-### 💼 **Business Management**
+### Business Management
 - **Customer management** - full CRUD operations with search and filtering
 - **Deal tracking** - manage sales pipeline with customizable stages
 - **Task management** - assign and track tasks with priorities
 - **Analytics dashboard** - view key metrics and performance data
 
-### 🎛️ **Admin Controls**
+### Admin Controls
 - **Deal stage management** - create, edit, and delete sales stages
 - **User administration** - manage all users in the system
 - **System configuration** - control application settings
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Backend
 - **Node.js** - Runtime environment
@@ -44,7 +44,7 @@ A modern, full-stack CRM application built with Node.js/Express backend and Reac
 - **TailwindCSS** - Styling
 - **Jest** - Testing
 
-## 📋 API Endpoints
+## API Endpoints
 
 ### Authentication
 | Method | Endpoint | Description | Access |
@@ -80,7 +80,7 @@ A modern, full-stack CRM application built with Node.js/Express backend and Reac
 | PUT | `/api/tasks/:id` | Update task | All authenticated |
 | DELETE | `/api/tasks/:id` | Delete task | Admin only |
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 MockCRM/
@@ -102,7 +102,7 @@ MockCRM/
 └── README.md              # This file
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 - Node.js (v14 or higher)
@@ -154,7 +154,7 @@ The application will open on `http://localhost:3000`
 
 3. **Start managing your CRM!**
 
-## 🔧 Environment Variables
+## Environment Variables
 
 ### Backend (.env)
 ```env
@@ -166,7 +166,7 @@ DB_PASSWORD=your_password
 DB_PORT=5432
 ```
 
-## 🧪 Testing
+## Testing
 
 ### Backend Tests
 ```bash
@@ -180,22 +180,18 @@ cd client
 npm test
 ```
 
-## 📚 Documentation
+## Documentation
 
 - **Design.md** - Comprehensive system design and architecture documentation
 - **API Documentation** - See the API Endpoints section above
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
 4. Add tests if applicable
 5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License.
 
 ---
 
