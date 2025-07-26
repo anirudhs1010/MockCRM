@@ -1,51 +1,202 @@
 # MockCRM
 
-CRM Application
-This is a CRM application built with a Node.js/Express backend and a React frontend. The project implements specific business logic and user feedback, including role-based permissions, dynamic data filtering, and inline editing capabilities.
+A modern, full-stack CRM application built with Node.js/Express backend and React frontend, featuring role-based access control, invite-only user registration, and comprehensive business management tools.
 
-Features Implemented
-This system translates direct user feedback into concrete features:
+## 🚀 Features
 
-Role-Based Data Access: The GET /api/deals endpoint automatically filters data based on the user's role. Sales Reps only see deals assigned to them, while Admins can view all deals across the organization.
+### 🔐 **Authentication & Security**
+- **JWT-based authentication** with bcrypt password hashing
+- **Invite-only registration system** - only admins can create new user accounts
+- **Role-based access control** (Admin & Sales Rep)
+- **Protected routes** with proper middleware
+- **Self-protection mechanisms** - admins cannot delete their own accounts
 
-Admin-Only Controls: Critical actions, like deleting a deal (DELETE /api/deals/:id), are protected by middleware and restricted to users with an admin role.
+### 👥 **User Management**
+- **Admin-only user creation** - invite users by email
+- **User role management** - assign admin or sales rep roles
+- **User deletion** - admins can delete any user except themselves
+- **Account isolation** - multi-tenant architecture
 
-Dynamic Filtering: The frontend allows users to filter the deals list by Stage and Outcome. These selections are passed as query parameters to the API, which returns a filtered dataset.
+### 💼 **Business Management**
+- **Customer management** - full CRUD operations with search and filtering
+- **Deal tracking** - manage sales pipeline with customizable stages
+- **Task management** - assign and track tasks with priorities
+- **Analytics dashboard** - view key metrics and performance data
 
-Inline Editing: Sales Reps can change a deal's stage directly from the main list view, providing a seamless and efficient user experience. This is powered by a useMutation hook in React Query.
+### 🎛️ **Admin Controls**
+- **Deal stage management** - create, edit, and delete sales stages
+- **User administration** - manage all users in the system
+- **System configuration** - control application settings
 
-Admin Configuration: A dedicated set of admin routes (e.g., GET /api/admin/stages) allows administrators to manage application-specific values like deal stages.
+## 🛠️ Tech Stack
 
-Tech Stack
-Backend: Node.js, Express.js
+### Backend
+- **Node.js** - Runtime environment
+- **Express.js** - Web framework
+- **PostgreSQL** - Database
+- **JWT** - Authentication
+- **bcrypt** - Password hashing
 
-Frontend: React, React Query (@tanstack/react-query)
+### Frontend
+- **React** - UI framework
+- **React Query** - Data fetching and caching
+- **React Router** - Navigation
+- **TailwindCSS** - Styling
+- **Jest** - Testing
 
-Authentication: JWT-based, with role checks via custom middleware.
+## 📋 API Endpoints
 
-API Endpoints
-Method	Endpoint	Description	Access
-GET	/api/deals	Gets a list of deals. Accepts stage and outcome query params.	Rep (own), Admin (all)
-PUT	/api/deals/:id	Updates a specific deal (e.g., changing the stage).	Rep (own), Admin (all)
-DELETE	/api/deals/:id	Deletes a specific deal.	Admin Only
-GET	/api/admin/stages	Gets the list of configurable deal stages.	Admin Only
-POST	/api/admin/stages	Adds a new possible deal stage.	Admin Only
+### Authentication
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|---------|
+| POST | `/auth/login` | User login | Public |
+| POST | `/auth/register` | User registration (invite-only) | Pre-created users |
+| POST | `/auth/logout` | User logout | Authenticated |
+| GET | `/auth/verify` | Verify JWT token | Authenticated |
 
-Export to Sheets
-Project Setup
-Clone the repository.
+### Admin Management
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|---------|
+| POST | `/auth/admin/create-user` | Create new user account | Admin only |
+| DELETE | `/auth/admin/users/:id` | Delete user | Admin only |
+| GET | `/api/admin/stages` | Get deal stages | Admin only |
+| POST | `/api/admin/stages` | Create deal stage | Admin only |
+| PUT | `/api/admin/stages/:id` | Update deal stage | Admin only |
+| DELETE | `/api/admin/stages/:id` | Delete deal stage | Admin only |
 
-Setup and run the backend server:
+### Business Data
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|---------|
+| GET | `/api/customers` | Get customers | All authenticated |
+| POST | `/api/customers` | Create customer | All authenticated |
+| PUT | `/api/customers/:id` | Update customer | All authenticated |
+| DELETE | `/api/customers/:id` | Delete customer | Admin only |
+| GET | `/api/deals` | Get deals | Rep (own), Admin (all) |
+| POST | `/api/deals` | Create deal | All authenticated |
+| PUT | `/api/deals/:id` | Update deal | Rep (own), Admin (all) |
+| DELETE | `/api/deals/:id` | Delete deal | Admin only |
+| GET | `/api/tasks` | Get tasks | All authenticated |
+| POST | `/api/tasks` | Create task | All authenticated |
+| PUT | `/api/tasks/:id` | Update task | All authenticated |
+| DELETE | `/api/tasks/:id` | Delete task | Admin only |
 
-Bash
+## 🏗️ Project Structure
 
+```
+MockCRM/
+├── client/                 # React frontend
+│   ├── src/
+│   │   ├── components/     # Reusable components
+│   │   ├── contexts/       # React contexts
+│   │   ├── pages/          # Page components
+│   │   ├── services/       # API services
+│   │   └── ...
+│   └── package.json
+├── server/                 # Node.js backend
+│   ├── config/             # Database configuration
+│   ├── middleware/         # Express middleware
+│   ├── routes/             # API routes
+│   ├── server.js           # Main server file
+│   └── package.json
+├── Design.md              # Detailed design documentation
+└── README.md              # This file
+```
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js (v14 or higher)
+- PostgreSQL
+- npm or yarn
+
+### 1. Clone the Repository
+```bash
+git clone <repository-url>
+cd MockCRM
+```
+
+### 2. Database Setup
+```bash
+# Create PostgreSQL database
+createdb mockcrm
+
+# Set up environment variables
+cp server/.env.example server/.env
+# Edit server/.env with your database credentials
+```
+
+### 3. Backend Setup
+```bash
 cd server
 npm install
 npm start
-Setup and run the frontend client:
+```
 
-Bash
+The server will start on `http://localhost:5000`
 
+### 4. Frontend Setup
+```bash
 cd client
 npm install
 npm start
+```
+
+The application will open on `http://localhost:3000`
+
+### 5. Initial Setup
+1. **Create your first admin account** using the database:
+   ```sql
+   INSERT INTO users (email, name, role, account_id) 
+   VALUES ('admin@example.com', 'Admin User', 'admin', 1);
+   ```
+
+2. **Register with the admin email** to set your password
+
+3. **Start managing your CRM!**
+
+## 🔧 Environment Variables
+
+### Backend (.env)
+```env
+JWT_SECRET=your_jwt_secret_here
+DB_USER=mockcrmuser
+DB_HOST=localhost
+DB_NAME=mockcrm
+DB_PASSWORD=your_password
+DB_PORT=5432
+```
+
+## 🧪 Testing
+
+### Backend Tests
+```bash
+cd server
+npm test
+```
+
+### Frontend Tests
+```bash
+cd client
+npm test
+```
+
+## 📚 Documentation
+
+- **Design.md** - Comprehensive system design and architecture documentation
+- **API Documentation** - See the API Endpoints section above
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+---
+
+**MockCRM** - Modern CRM for modern businesses
