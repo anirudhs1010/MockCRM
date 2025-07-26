@@ -1,10 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { customersAPI } from '../services/api';
 
 const CustomersPage = () => {
-  // TODO: For local/dev use only - bypass Okta and always allow admin actions. Restore secure authentication for production use.
-  const isAdmin = () => true;
+  const { isAdmin } = useAuth();
   const queryClient = useQueryClient();
   
   // State for UI

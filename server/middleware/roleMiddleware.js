@@ -3,6 +3,11 @@ const pool = require('../config/database');
 
 // Check if user is authenticated
 const requireAuth = (req, res, next) => {
+  // In development mode, always allow access
+  if (process.env.NODE_ENV === 'development') {
+    return next();
+  }
+  
   if (req.user) {
     return next();
   }
@@ -11,8 +16,8 @@ const requireAuth = (req, res, next) => {
 
 // Check if user has admin role
 const requireAdmin = (req, res, next) => {
+  // Always allow admin access in dev
   if (process.env.NODE_ENV === 'development') {
-    // Always allow admin access in dev
     return next();
   }
   if (req.user && req.user.role === 'admin') {
@@ -23,6 +28,11 @@ const requireAdmin = (req, res, next) => {
 
 // Check if user is admin or owns the resource
 const requireAdminOrOwnership = (req, res, next) => {
+  // In development mode, always allow access
+  if (process.env.NODE_ENV === 'development') {
+    return next();
+  }
+  
   if (!req.user) {
     return res.status(401).json({ error: 'Authentication required' });
   }
@@ -38,6 +48,11 @@ const requireAdminOrOwnership = (req, res, next) => {
 
 // Check if user can access a deal (admin or creator of the deal)
 const canAccessDeal = async (req, res, next) => {
+  // In development mode, always allow access
+  if (process.env.NODE_ENV === 'development') {
+    return next();
+  }
+  
   if (!req.user) {
     return res.status(401).json({ error: 'Authentication required' });
   }
@@ -67,6 +82,11 @@ const canAccessDeal = async (req, res, next) => {
 
 // Check if user can access a customer (admin or customer belongs to same account)
 const canAccessCustomer = async (req, res, next) => {
+  // In development mode, always allow access
+  if (process.env.NODE_ENV === 'development') {
+    return next();
+  }
+  
   if (!req.user) {
     return res.status(401).json({ error: 'Authentication required' });
   }
@@ -96,6 +116,11 @@ const canAccessCustomer = async (req, res, next) => {
 
 // Check if user can access a task (admin or assigned to the task)
 const canAccessTask = async (req, res, next) => {
+  // In development mode, always allow access
+  if (process.env.NODE_ENV === 'development') {
+    return next();
+  }
+  
   if (!req.user) {
     return res.status(401).json({ error: 'Authentication required' });
   }

@@ -33,16 +33,19 @@ router.get('/', requireAuth, async (req, res) => {
     }
 
     // Add filtering by stage and outcome if provided
-    if (req.query.stage) {
-      query += ` AND s.name = $${params.length + 1}`;
+    if (req.query.stage) { 
       params.push(req.query.stage);
+      query += ` AND s.name = $${params.length}`;
+      
     }
     if (req.query.outcome) {
       query += ` AND d.outcome = $${params.length + 1}`;
       params.push(req.query.outcome);
     }
+    
     query += ' ORDER BY d.created_at DESC';
-
+    console.log(query);
+    console.log(JSON.stringify(params));
     const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (err) {

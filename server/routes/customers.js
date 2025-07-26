@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../config/database');
 const { requireAdmin, canAccessCustomer } = require('../middleware/roleMiddleware');
-const { verifyToken, requireAuth } = require('../middleware/jwtMiddleware');
+const { requireAuth } = require('../middleware/jwtMiddleware');
 
 // GET all customers for the user's account
-router.get('/', verifyToken, requireAuth, async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   try {
     const result = await pool.query(
       'SELECT * FROM customers WHERE account_id = $1 ORDER BY created_at DESC',

@@ -17,7 +17,7 @@ Currently, the frontend will be React with TailwindCSS for styling. It will have
 ## Frontend Implementation Status
 
 ### ✅ Completed Components
-- **Authentication System**: Okta OAuth integration with session management
+- **Authentication System**: Custom email/password authentication with JWT tokens
 - **Navigation**: Role-based navigation with admin-only links
 - **Dashboard Page**: Analytics overview with charts, metrics, and recent activity
 - **Customers Page**: Full CRUD operations with search and filtering
@@ -41,7 +41,7 @@ Currently, the frontend will be React with TailwindCSS for styling. It will have
 - **State Management**: React Query for server state, React hooks for local state
 - **Routing**: React Router with protected routes
 - **Styling**: TailwindCSS with custom components
-- **API Integration**: Axios with authentication headers
+- **API Integration**: Fetch API with authentication headers
 - **Error Handling**: Toast notifications and error boundaries
 - **Performance**: Optimistic updates and query invalidation
 
@@ -94,13 +94,23 @@ Additionally, each request will be logged for analytics for developers**
 This section elaborates on any additional questions concerning the system.
 
 Security and Access Control: JWT-based authentication determines user's role and whether or not they have access to read or write such as { "id": "1234567890", "name": "John Doe", "admin": true }
-This case is for already used accounts, but for new accounts will need OAuth 2.0 to add new sales team accounts via email
+This case is for already used accounts, but for new accounts will need email-based registration to add new sales team accounts
+
+### Role-Based Navigation Access
+- **Admin Users**: Can access Dashboard, Customers, Deals, and Tasks pages
+  - Can view, create, edit, and delete customers
+- **Sales Users**: Can access Dashboard, Customers, Deals, Tasks, and Admin pages
+  - Can view, create, and edit customers (cannot delete)
+- **Route Protection**: 
+  - `/customers` route is accessible to all authenticated users
+  - `/admin` route is protected with `adminOnly` - only admin users can access (though this may be reversed based on current implementation)
+  - All other routes are accessible to authenticated users
 
 ## Querying Logic and Database Access Patterns
 
 ### Authentication Flow
-- **JWT Token Verification**: Uses Okta JWKS for token validation
-- **User Creation**: Automatically creates new users with default 'sales_rep' role when they first authenticate
+- **JWT Token Verification**: Uses JWT tokens for authentication with bcrypt password hashing
+- **User Registration**: Users can register with email, password, and name, automatically creating an account
 - **Account Isolation**: Each user belongs to an account, ensuring multi-tenant data isolation
 - **Role-Based Access**: Users can only access data within their account scope
 
@@ -117,7 +127,7 @@ This case is for already used accounts, but for new accounts will need OAuth 2.0
 - **User Creation Logic**: Improved user creation with fallback name extraction and proper default role assignment
 - **Role Middleware**: Fixed database access patterns in role-based access control middleware
 - **Admin API Schema Mismatch**: Fixed admin routes to use correct table name `stages` instead of `deal_stages` and removed account_id filtering since stages are global
-- **User Creation Schema**: Fixed admin user creation to include required `okta_id` field with temporary placeholder values
+- **User Creation Schema**: Fixed admin user creation to include required fields with proper validation
 Search and Filters: Will generate a unique SQL queries for filtering to Postgres based on indicated user actions and return filtered data accordingly in results for Deals or Accounts page
 Dashboard and Analytics: Will show win/loss ratio sorted by customer in pi chart, along with ratio of tasks completed to stage of sale
 Other Features: CSV export of tables for customers? 
@@ -137,12 +147,12 @@ While logged into salesperson A, check if a deal in "Deals" page can be deleted 
 While logging into salesperson B, deal should be deleted 
 Additionally all dashboard/analytics should be updated accordingly - pi chart with w/l ratio for now - can add additional functionality for it
 
-## TODO: E2E Testing for OAuth
-- **REMINDER:** Implement E2E tests with real browser (Cypress/Playwright) for OAuth authentication flow
-- Current unit tests mock Passport and don't test actual Okta integration
-- Need to test full OAuth flow: login redirect → Okta authentication → callback → session creation
+## TODO: E2E Testing for Authentication
+- **REMINDER:** Implement E2E tests with real browser (Cypress/Playwright) for authentication flow
+- Current unit tests mock authentication and don't test actual JWT integration
+- Need to test full authentication flow: registration → login → token verification → session management
 - Test both successful authentication and error scenarios
-- Verify user roles and permissions work correctly after OAuth login
+- Verify user roles and permissions work correctly after authentication
 
 # Deployment and Operations
 Hosting: The frontend will be on Vercel while the Backend can be on Google Cloud Run (for production environments)
@@ -150,37 +160,35 @@ CI/CD pipeline: Using GitHub Actions to automate testing and deployment
 Monitoring: Using Google Cloud Monitoring for performance for possible production environments
 Will finds specifics of latency along with with failure rates logged here
 
-# Okta OAuth Integration
+# Custom Email Authentication System
 
-## Credentials and Setup
-- **Client ID:** [REDACTED - use environment variable REACT_APP_OKTA_CLIENT_ID]
-- **Okta Domain:** [REDACTED - use environment variable REACT_APP_OKTA_ISSUER]
-- **Callback URL:** http://localhost:5000/auth/okta/callback
-- **Client Secret:** (stored in .env, not in this doc)
+## Authentication Flow
+- **Registration**: Users can register with email, password, and name
+- **Login**: Users authenticate with email and password
+- **JWT Tokens**: Authentication uses JWT tokens stored in localStorage
+- **Password Security**: Passwords are hashed using bcrypt with salt rounds
+- **Token Verification**: Backend verifies JWT tokens on protected routes
 
-## Integration Steps
-- Use Passport.js with the `passport-openidconnect` strategy for Okta OAuth.
-- Configure Express session middleware with a custom session secret (not provided by Okta).
-- On successful login, look up or create the user in the app database and assign roles (admin, sales, etc.).
-- Store and manage user roles in the app database, not in Okta.
-- Protect routes using Passport's `req.isAuthenticated()` and custom role middleware.
-
-## Why a Session Secret is Needed
-- The session secret is required by `express-session` to sign and verify session cookies.
-- It is not provided by Okta; you must generate your own (e.g., with `openssl rand -hex 32`).
-- This secret ensures that session cookies cannot be tampered with by clients.
-- The session secret should be kept private and stored in your `.env` file.
-
-## Example .env entries
+## Environment Variables
 ```
-OKTA_DOMAIN=your_okta_domain.okta.com
-OKTA_CLIENT_ID=your_client_id_here
-OKTA_CLIENT_SECRET=your_client_secret_here
-OKTA_CALLBACK_URL=http://localhost:5000/auth/okta/callback
-SESSION_SECRET=your_session_secret_here
-REACT_APP_OKTA_ISSUER=https://your_okta_domain.okta.com/oauth2/default
-REACT_APP_OKTA_CLIENT_ID=your_client_id_here
+JWT_SECRET=your_jwt_secret_here
+DB_USER=mockcrmuser
+DB_HOST=localhost
+DB_NAME=mockcrm
+DB_PASSWORD=rucbar@7SH
+DB_PORT=5432
 ```
+
+## Database Schema Updates
+- **users table**: Added `password_hash` column for storing bcrypt hashed passwords
+- **Removed**: `okta_id` column (no longer needed)
+- **Authentication**: Uses email/password instead of Okta OAuth
+
+## Security Features
+- **Password Hashing**: bcrypt with 10 salt rounds
+- **JWT Tokens**: 24-hour expiration
+- **Account Isolation**: Multi-tenant architecture maintained
+- **Role-Based Access**: Admin and sales_rep roles supported
 
 ---
 

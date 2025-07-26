@@ -4,12 +4,12 @@ import { useAuth } from '../contexts/AuthContext';
 import { adminAPI } from '../services/api';
 
 const AdminPage = () => {
-  const { user, isAdmin, oktaAuth } = useAuth();
+  const { user, isAdmin } = useAuth();
   const queryClient = useQueryClient();
   
   console.log('AdminPage: Current user:', user);
   console.log('AdminPage: isAdmin():', isAdmin());
-  console.log('AdminPage: oktaAuth available:', !!oktaAuth);
+  console.log('AdminPage: oktaAuth available:', !!user?.oktaAuth);
   
   // State for UI
   const [activeTab, setActiveTab] = useState('stages');
@@ -21,22 +21,17 @@ const AdminPage = () => {
   // Fetch data
   const { data: stages, isLoading: stagesLoading, error: stagesError } = useQuery({
     queryKey: ['stages'],
-    queryFn: () => adminAPI.getStages(oktaAuth),
-    enabled: !!oktaAuth, // Only run when oktaAuth is available
+    queryFn: adminAPI.getStages,
   });
 
   const { data: users, isLoading: usersLoading, error: usersError } = useQuery({
     queryKey: ['users'],
-    queryFn: () => adminAPI.getUsers(oktaAuth),
-    enabled: !!oktaAuth, // Only run when oktaAuth is available
+    queryFn: adminAPI.getUsers,
   });
 
   // Stage mutations
   const createStageMutation = useMutation({
-    mutationFn: (data) => {
-      if (!oktaAuth) throw new Error('Authentication not ready');
-      return adminAPI.createStage(data, oktaAuth);
-    },
+    mutationFn: (data) => adminAPI.createStage(data),
     onSuccess: () => {
       queryClient.invalidateQueries(['stages']);
       setShowStageModal(false);
@@ -44,10 +39,7 @@ const AdminPage = () => {
   });
 
   const updateStageMutation = useMutation({
-    mutationFn: ({ id, data }) => {
-      if (!oktaAuth) throw new Error('Authentication not ready');
-      return adminAPI.updateStage(id, data, oktaAuth);
-    },
+    mutationFn: ({ id, data }) => adminAPI.updateStage(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries(['stages']);
       setShowStageModal(false);
@@ -56,10 +48,7 @@ const AdminPage = () => {
   });
 
   const deleteStageMutation = useMutation({
-    mutationFn: (id) => {
-      if (!oktaAuth) throw new Error('Authentication not ready');
-      return adminAPI.deleteStage(id, oktaAuth);
-    },
+    mutationFn: (id) => adminAPI.deleteStage(id),
     onSuccess: () => {
       queryClient.invalidateQueries(['stages']);
     },
@@ -67,10 +56,7 @@ const AdminPage = () => {
 
   // User mutations
   const createUserMutation = useMutation({
-    mutationFn: (data) => {
-      if (!oktaAuth) throw new Error('Authentication not ready');
-      return adminAPI.createUser(data, oktaAuth);
-    },
+    mutationFn: (data) => adminAPI.createUser(data),
     onSuccess: () => {
       queryClient.invalidateQueries(['users']);
       setShowUserModal(false);
@@ -78,14 +64,18 @@ const AdminPage = () => {
   });
 
   const updateUserMutation = useMutation({
-    mutationFn: ({ id, data }) => {
-      if (!oktaAuth) throw new Error('Authentication not ready');
-      return adminAPI.updateUser(id, data, oktaAuth);
-    },
+    mutationFn: ({ id, data }) => adminAPI.updateUser(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries(['users']);
       setShowUserModal(false);
       setEditingUser(null);
+    },
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: (id) => adminAPI.deleteUser(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['users']);
     },
   });
 
@@ -127,6 +117,13 @@ const AdminPage = () => {
     console.log('AdminPage: Editing user:', user);
     setEditingUser(user);
     setShowUserModal(true);
+  };
+
+  const handleDeleteUser = (id) => {
+    if (window.confirm('Are you sure you want to delete this user?')) {
+      console.log('AdminPage: Deleting user with id:', id);
+      deleteUserMutation.mutate(id);
+    }
   };
 
   if (stagesLoading || usersLoading) {
@@ -371,12 +368,20 @@ const AdminPage = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button
-                          onClick={() => handleEditUser(user)}
-                          className="text-blue-600 hover:text-blue-900"
-                        >
-                          Edit
-                        </button>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleEditUser(user)}
+                            className="text-blue-600 hover:text-blue-900"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteUser(user.id)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))

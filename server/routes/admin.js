@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
+const { requireAuth, requireAdmin } = require('../middleware/jwtMiddleware');
 const pool = require('../config/database');
-const { verifyToken, requireAuth, requireAdmin } = require('../middleware/jwtMiddleware');
 
 // Apply JWT authentication and admin-only middleware to all routes
-router.use(verifyToken, requireAdmin);
+router.use(requireAuth, requireAdmin);
 
 // GET all deal stages
 router.get('/stages', async (req, res) => {
