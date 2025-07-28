@@ -26,11 +26,8 @@ router.get('/', requireAuth, async (req, res) => {
                  WHERE d.account_id = $1`;
     let params = [req.user.account_id];
 
-    // If user is not admin, only show their deals
-    if (req.user.role !== 'admin') {
-      query += ' AND d.user_id = $2';
-      params.push(req.user.id);
-    }
+    // All users (admin and sales) can see all deals in their account
+    // No additional filtering needed
 
     // Add filtering by stage and outcome if provided
     if (req.query.stage) { 
@@ -117,7 +114,7 @@ router.put('/:id', requireAuth, canAccessDeal, async (req, res) => {
 router.delete('/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    // Always allow deleting any deal regardless of account_id (development behavior in production)
+    // Delete deal (admin only)
     const result = await pool.query(
       'DELETE FROM deals WHERE id = $1 RETURNING *',
       [id]

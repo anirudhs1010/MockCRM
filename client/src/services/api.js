@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE_URL = 'http://localhost:5000';
 
 // Helper function to handle API responses
 const handleResponse = async (response) => {
@@ -9,14 +9,18 @@ const handleResponse = async (response) => {
   return response.json();
 };
 
-// Helper function to make requests (no authentication required)
+// Helper function to make requests with authentication
 const makeRequest = async (endpoint, options = {}) => {
   const url = `${API_BASE_URL}${endpoint}`;
+  
+  // Get auth token from localStorage
+  const token = localStorage.getItem('authToken');
   
   const config = {
     ...options,
     headers: {
       'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` }),
       ...options.headers,
     },
   };
@@ -116,8 +120,8 @@ export const adminAPI = {
 
 // Auth API
 export const authAPI = {
-  getStatus: () => makeRequest('/auth/status'),
-  logout: () => makeRequest('/auth/logout'),
+  verify: () => makeRequest('/auth/verify'),
+  logout: () => makeRequest('/auth/logout', { method: 'POST' }),
 };
 
 // Health check

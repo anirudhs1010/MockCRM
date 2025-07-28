@@ -97,13 +97,11 @@ router.post('/users', async (req, res) => {
     const { name, email, role } = req.body;
     
     // For now, create a placeholder user that can be activated later
-    // In a real app, you'd send an invitation email and they'd authenticate via Okta
-    // Generate a temporary okta_id for placeholder users
-    const tempOktaId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Create user account (they will set their password during registration)
     
     const result = await pool.query(
-      'INSERT INTO users (account_id, okta_id, name, email, role) VALUES ($1, $2, $3, $4, $5) RETURNING id, name, email, role, created_at',
-      [req.user.account_id, tempOktaId, name, email, role || 'sales_rep']
+              'INSERT INTO users (account_id, name, email, role) VALUES ($1, $2, $3, $4) RETURNING id, name, email, role, created_at',
+        [req.user.account_id, name, email, role || 'sales_rep']
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {

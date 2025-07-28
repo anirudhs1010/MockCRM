@@ -9,7 +9,7 @@ const AdminPage = () => {
   
   console.log('AdminPage: Current user:', user);
   console.log('AdminPage: isAdmin():', isAdmin());
-  console.log('AdminPage: oktaAuth available:', !!user?.oktaAuth);
+      console.log('AdminPage: user available:', !!user);
   
   // State for UI
   const [activeTab, setActiveTab] = useState('stages');

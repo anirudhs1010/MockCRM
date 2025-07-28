@@ -1,31 +1,81 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import { MemoryRouter } from 'react-router-dom';
-import LoginPage from '../LoginPage';
+import { BrowserRouter } from 'react-router-dom';
+import Login from '../../components/Login';
+import { AuthProvider } from '../../contexts/AuthContext';
 
-jest.mock('@okta/okta-react', () => ({
-  useOktaAuth: () => ({
-    oktaAuth: { signInWithRedirect: jest.fn(), signOut: jest.fn() },
-    authState: { isAuthenticated: false, isPending: false }
-  }),
-}));
-
+// Mock the AuthContext
 jest.mock('../../contexts/AuthContext', () => ({
   useAuth: () => ({
-    loading: false,
+    login: jest.fn(),
+    error: null,
     user: null,
-    oktaError: null,
+    loading: false
   }),
+  AuthProvider: ({ children }) => <div data-testid="auth-provider">{children}</div>
 }));
 
-describe('LoginPage', () => {
+// Mock react-router-dom
+jest.mock('react-router-dom', () => ({
+  ...jest.requireActual('react-router-dom'),
+  useNavigate: () => jest.fn()
+}));
+
+const renderWithProviders = (component) => {
+  return render(
+    <BrowserRouter>
+      <AuthProvider>
+        {component}
+      </AuthProvider>
+    </BrowserRouter>
+  );
+};
+
+describe('Login Component', () => {
   it('renders login form', () => {
-    render(
-      <MemoryRouter>
-        <LoginPage />
-      </MemoryRouter>
-    );
-    expect(screen.getByText(/sign in to mockcrm/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /sign in with okta/i })).toBeInTheDocument();
+    renderWithProviders(<Login />);
+    
+    expect(screen.getByPlaceholderText(/email address/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/password/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /sign in/i })).toBeInTheDocument();
+  });
+
+  it('shows error message when provided', () => {
+    const mockUseAuth = require('../../contexts/AuthContext').useAuth;
+    mockUseAuth.mockReturnValue({
+      login: jest.fn(),
+      error: 'Invalid credentials',
+      user: null,
+      loading: false
+    });
+
+    renderWithProviders(<Login />);
+    
+    expect(screen.getByText('Invalid credentials')).toBeInTheDocument();
+  });
+
+  it('handles form submission', async () => {
+    const mockLogin = jest.fn();
+    const mockUseAuth = require('../../contexts/AuthContext').useAuth;
+    mockUseAuth.mockReturnValue({
+      login: mockLogin,
+      error: null,
+      user: null,
+      loading: false
+    });
+
+    renderWithProviders(<Login />);
+    
+    const emailInput = screen.getByPlaceholderText(/email address/i);
+    const passwordInput = screen.getByPlaceholderText(/password/i);
+    const submitButton = screen.getByRole('button', { name: /sign in/i });
+
+    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'password123' } });
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(mockLogin).toHaveBeenCalledWith('test@example.com', 'password123');
+    });
   });
 }); 

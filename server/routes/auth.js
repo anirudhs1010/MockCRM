@@ -145,10 +145,10 @@ router.post('/login', async (req, res) => {
 
     const user = userResult.rows[0];
 
-    // Check if user has a password hash (new system) or not (old Okta system)
+    // Check if user has a password hash
     if (!user.password_hash) {
       return res.status(401).json({ 
-        error: 'This account was created with the old authentication system. Please contact an administrator to reset your password.' 
+        error: 'User account not properly configured. Please contact an administrator to set up your password.' 
       });
     }
 

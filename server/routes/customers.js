@@ -79,7 +79,7 @@ router.put('/:id', requireAuth, canAccessCustomer, async (req, res) => {
 router.delete('/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    // Always allow deleting any customer regardless of account_id (development behavior in production)
+    // Delete customer (admin only)
     const result = await pool.query(
       'DELETE FROM customers WHERE id = $1 RETURNING *',
       [id]

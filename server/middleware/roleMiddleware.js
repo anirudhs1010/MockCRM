@@ -3,11 +3,6 @@ const pool = require('../config/database');
 
 // Check if user is authenticated
 const requireAuth = (req, res, next) => {
-  // In development mode, always allow access
-  if (process.env.NODE_ENV === 'development') {
-    return next();
-  }
-  
   if (req.user) {
     return next();
   }
@@ -16,10 +11,6 @@ const requireAuth = (req, res, next) => {
 
 // Check if user has admin role
 const requireAdmin = (req, res, next) => {
-  // Always allow admin access in dev
-  if (process.env.NODE_ENV === 'development') {
-    return next();
-  }
   if (req.user && req.user.role === 'admin') {
     return next();
   }
@@ -28,11 +19,6 @@ const requireAdmin = (req, res, next) => {
 
 // Check if user is admin or owns the resource
 const requireAdminOrOwnership = (req, res, next) => {
-  // In development mode, always allow access
-  if (process.env.NODE_ENV === 'development') {
-    return next();
-  }
-  
   if (!req.user) {
     return res.status(401).json({ error: 'Authentication required' });
   }
@@ -48,11 +34,6 @@ const requireAdminOrOwnership = (req, res, next) => {
 
 // Check if user can access a deal (admin or creator of the deal)
 const canAccessDeal = async (req, res, next) => {
-  // In development mode, always allow access
-  if (process.env.NODE_ENV === 'development') {
-    return next();
-  }
-  
   if (!req.user) {
     return res.status(401).json({ error: 'Authentication required' });
   }
@@ -61,12 +42,12 @@ const canAccessDeal = async (req, res, next) => {
     return next();
   }
   
-  // For non-admin users, check if they created the deal
+  // For non-admin users, check if the deal belongs to their account
   const dealId = req.params.id;
   try {
     const result = await pool.query(
-      'SELECT * FROM deals WHERE id = $1 AND user_id = $2 AND account_id = $3',
-      [dealId, req.user.id, req.user.account_id]
+      'SELECT * FROM deals WHERE id = $1 AND account_id = $2',
+      [dealId, req.user.account_id]
     );
     
     if (result.rows.length > 0) {
@@ -82,11 +63,6 @@ const canAccessDeal = async (req, res, next) => {
 
 // Check if user can access a customer (admin or customer belongs to same account)
 const canAccessCustomer = async (req, res, next) => {
-  // In development mode, always allow access
-  if (process.env.NODE_ENV === 'development') {
-    return next();
-  }
-  
   if (!req.user) {
     return res.status(401).json({ error: 'Authentication required' });
   }
@@ -116,11 +92,6 @@ const canAccessCustomer = async (req, res, next) => {
 
 // Check if user can access a task (admin or assigned to the task)
 const canAccessTask = async (req, res, next) => {
-  // In development mode, always allow access
-  if (process.env.NODE_ENV === 'development') {
-    return next();
-  }
-  
   if (!req.user) {
     return res.status(401).json({ error: 'Authentication required' });
   }
@@ -129,12 +100,12 @@ const canAccessTask = async (req, res, next) => {
     return next();
   }
   
-  // For non-admin users, check if they are assigned to the task
+  // For non-admin users, check if the task belongs to their account
   const taskId = req.params.id;
   try {
     const result = await pool.query(
-      'SELECT t.* FROM tasks t JOIN deals d ON t.deal_id = d.id WHERE t.id = $1 AND t.user_id = $2 AND d.account_id = $3',
-      [taskId, req.user.id, req.user.account_id]
+      'SELECT t.* FROM tasks t JOIN deals d ON t.deal_id = d.id WHERE t.id = $1 AND d.account_id = $2',
+      [taskId, req.user.account_id]
     );
     
     if (result.rows.length > 0) {

@@ -1,29 +1,26 @@
-import { useOktaAuth } from '@okta/okta-react';
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 const LoginCallback = () => {
-  const { oktaAuth, authState } = useOktaAuth();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
-    if (authState?.isAuthenticated) {
-      // User is authenticated, redirect to dashboard
-      navigate('/dashboard', { replace: true });
-    } else if (authState?.isPending) {
-      // Still processing the callback, show loading
-      return;
+    // If user is authenticated, redirect to dashboard
+    if (user) {
+      navigate('/dashboard');
     } else {
-      // Authentication failed, redirect to login
-      navigate('/login', { replace: true });
+      // If not authenticated, redirect to login
+      navigate('/login');
     }
-  }, [authState, navigate]);
+  }, [user, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="flex items-center justify-center min-h-screen">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-4 text-gray-600">Completing sign in...</p>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-gray-600">Redirecting...</p>
       </div>
     </div>
   );

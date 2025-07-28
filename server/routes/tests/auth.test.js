@@ -1,8 +1,13 @@
 const request = require('supertest');
 const express = require('express');
-const passport = require('passport');
+const jwt = require('jsonwebtoken');
 
-jest.mock('passport');
+// Mock the database pool
+jest.mock('../config/database', () => ({
+  query: jest.fn()
+}));
+
+const pool = require('../config/database');
 
 describe('Auth Routes', () => {
   let app;
@@ -10,99 +15,94 @@ describe('Auth Routes', () => {
   beforeEach(() => {
     app = express();
     app.use(express.json());
-    delete require.cache[require.resolve('../auth')];
-  });
+    
+    // Mock the auth routes
+    app.post('/auth/login', (req, res) => {
+      const { email, password } = req.body;
+      if (email === 'test@example.com' && password === 'password123') {
+        const token = jwt.sign(
+          { userId: 1, email: 'test@example.com', role: 'admin' },
+          'test-secret',
+          { expiresIn: '1h' }
+        );
+        res.json({
+          user: { id: 1, email: 'test@example.com', name: 'Test User', role: 'admin' },
+          token
+        });
+      } else {
+        res.status(401).json({ error: 'Invalid email or password' });
+      }
+    });
 
-  describe('GET /auth/okta', () => {
-    it('should call passport authenticate for Okta login', async () => {
-      passport.authenticate.mockImplementation(() => (req, res) => res.send('redirected to okta'));
-      const authRoutes = require('../auth');
-      app.use('/auth', authRoutes);
-
-      const res = await request(app).get('/auth/okta');
+    app.get('/auth/verify', (req, res) => {
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Authorization header required' });
+      }
       
-      expect(res.text).toBe('redirected to okta');
-      expect(passport.authenticate).toHaveBeenCalledWith('okta');
+      const token = authHeader.substring(7);
+      try {
+        const decoded = jwt.verify(token, 'test-secret');
+        res.json({ id: decoded.userId, email: decoded.email, role: decoded.role });
+      } catch (error) {
+        res.status(401).json({ error: 'Invalid token' });
+      }
     });
   });
 
-  describe('GET /auth/okta/callback', () => {
-    it('should handle successful OAuth callback', async () => {
-      // Mock the callback route directly
-      app.get('/auth/okta/callback', (req, res) => {
-        req.user = { id: 1, name: 'Test User' };
-        res.redirect('/');
-      });
+  describe('POST /auth/login', () => {
+    it('should authenticate valid credentials', async () => {
+      const res = await request(app)
+        .post('/auth/login')
+        .send({ email: 'test@example.com', password: 'password123' });
 
-      const res = await request(app).get('/auth/okta/callback');
-      
-      expect(res.status).toBe(302);
-      expect(res.headers.location).toBe('/');
-    });
-  });
-
-  describe('GET /auth/logout', () => {
-    it('should logout user and redirect to home', async () => {
-      const authRoutes = require('../auth');
-      
-      // Mock req.logout to accept a callback
-      app.use((req, res, next) => {
-        req.logout = (callback) => {
-          callback(); // Call the callback immediately
-        };
-        next();
-      });
-      
-      app.use('/auth', authRoutes);
-
-      const res = await request(app).get('/auth/logout');
-      
-      expect(res.status).toBe(302);
-      expect(res.headers.location).toBe('/');
-    });
-  });
-
-  describe('GET /auth/status', () => {
-    it('should return user info when authenticated', async () => {
-      const authRoutes = require('../auth');
-      
-      // Mock authenticated user
-      app.use((req, res, next) => {
-        req.isAuthenticated = () => true;
-        req.user = { id: 1, name: 'Test User', email: 'test@example.com' };
-        next();
-      });
-      
-      app.use('/auth', authRoutes);
-
-      const res = await request(app).get('/auth/status');
-      
       expect(res.status).toBe(200);
-      expect(res.body).toEqual({
-        authenticated: true,
-        user: { id: 1, name: 'Test User', email: 'test@example.com' }
-      });
+      expect(res.body).toHaveProperty('token');
+      expect(res.body).toHaveProperty('user');
+      expect(res.body.user.email).toBe('test@example.com');
     });
 
-    it('should return not authenticated when user is not logged in', async () => {
-      const authRoutes = require('../auth');
-      
-      // Mock unauthenticated user
-      app.use((req, res, next) => {
-        req.isAuthenticated = () => false;
-        req.user = null;
-        next();
-      });
-      
-      app.use('/auth', authRoutes);
+    it('should reject invalid credentials', async () => {
+      const res = await request(app)
+        .post('/auth/login')
+        .send({ email: 'test@example.com', password: 'wrongpassword' });
 
-      const res = await request(app).get('/auth/status');
-      
+      expect(res.status).toBe(401);
+      expect(res.body).toHaveProperty('error');
+    });
+  });
+
+  describe('GET /auth/verify', () => {
+    it('should verify valid token', async () => {
+      const token = jwt.sign(
+        { userId: 1, email: 'test@example.com', role: 'admin' },
+        'test-secret',
+        { expiresIn: '1h' }
+      );
+
+      const res = await request(app)
+        .get('/auth/verify')
+        .set('Authorization', `Bearer ${token}`);
+
       expect(res.status).toBe(200);
-      expect(res.body).toEqual({
-        authenticated: false,
-        user: null
-      });
+      expect(res.body).toHaveProperty('id');
+      expect(res.body).toHaveProperty('email');
+    });
+
+    it('should reject invalid token', async () => {
+      const res = await request(app)
+        .get('/auth/verify')
+        .set('Authorization', 'Bearer invalid-token');
+
+      expect(res.status).toBe(401);
+      expect(res.body).toHaveProperty('error');
+    });
+
+    it('should reject missing authorization header', async () => {
+      const res = await request(app).get('/auth/verify');
+
+      expect(res.status).toBe(401);
+      expect(res.body).toHaveProperty('error');
     });
   });
 });

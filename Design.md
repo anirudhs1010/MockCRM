@@ -152,10 +152,10 @@ Additionally all dashboard/analytics should be updated accordingly - pi chart wi
 
 ## Recent Authentication System Improvements
 
-### Development Mode Fixes
-- **Removed automatic user creation** in development mode
-- **Removed development bypasses** from ProtectedRoute component
-- **Real authentication now works** in development environment
+### Authentication System
+- **Real JWT authentication** with proper token verification
+- **Role-based access control** for admin and sales users
+- **Account isolation** maintained for multi-tenant security
 - **Proper login/logout flow** implemented
 
 ### Access Control Updates
@@ -204,8 +204,8 @@ DB_PORT=5432
 
 ## Database Schema Updates
 - **users table**: Added `password_hash` column for storing bcrypt hashed passwords
-- **Removed**: `okta_id` column (no longer needed)
-- **Authentication**: Uses email/password instead of Okta OAuth
+- **Removed**: `okta_id` column (replaced with custom authentication)
+- **Authentication**: Uses custom email/password system with JWT tokens
 
 ## Security Features
 - **Password Hashing**: bcrypt with 10 salt rounds
