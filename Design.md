@@ -125,7 +125,7 @@ This case is for already used accounts, but for new accounts will need email-bas
 - **Global Stages**: Deal stages are global across all accounts (not account-specific) to maintain consistency in sales processes
 
 ### Fixed Querying Issues
-- **Authentication Middleware**: Fixed inconsistent use of `req.isAuthenticated()` vs `req.user` across middleware
+- **Authentication Middleware**: Updated to use consistent `req.user` pattern across all middleware
 - **Database Pool Access**: Standardized database pool access pattern across all middleware and routes
 - **User Creation Logic**: Improved user creation with fallback name extraction and proper default role assignment
 - **Role Middleware**: Fixed database access patterns in role-based access control middleware
@@ -204,7 +204,6 @@ DB_PORT=5432
 
 ## Database Schema Updates
 - **users table**: Added `password_hash` column for storing bcrypt hashed passwords
-- **Removed**: `okta_id` column (replaced with custom authentication)
 - **Authentication**: Uses custom email/password system with JWT tokens
 
 ## Security Features

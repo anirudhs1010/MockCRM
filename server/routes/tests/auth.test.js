@@ -3,11 +3,11 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 
 // Mock the database pool
-jest.mock('../config/database', () => ({
+jest.mock('../../config/database', () => ({
   query: jest.fn()
 }));
 
-const pool = require('../config/database');
+const pool = require('../../config/database');
 
 describe('Auth Routes', () => {
   let app;

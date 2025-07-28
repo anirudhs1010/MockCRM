@@ -1,11 +1,11 @@
 const jwt = require('jsonwebtoken');
 
 // Mock the database pool
-jest.mock('../config/database', () => ({
+jest.mock('../../config/database', () => ({
   query: jest.fn()
 }));
 
-const pool = require('../config/database');
+const pool = require('../../config/database');
 
 describe('JWT Middleware', () => {
   let req, res, next;

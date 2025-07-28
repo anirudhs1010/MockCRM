@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../config/database');
-const { requireAdmin, canAccessCustomer } = require('../middleware/roleMiddleware');
-const { requireAuth } = require('../middleware/jwtMiddleware');
+const { canAccessCustomer } = require('../middleware/roleMiddleware');
+const { requireAuth, requireAdmin } = require('../middleware/jwtMiddleware');
 
 // GET all customers for the user's account
 router.get('/', requireAuth, async (req, res) => {
@@ -76,7 +76,7 @@ router.put('/:id', requireAuth, canAccessCustomer, async (req, res) => {
 });
 
 // DELETE customer (admin only)
-router.delete('/:id', requireAdmin, async (req, res) => {
+router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     // Delete customer (admin only)

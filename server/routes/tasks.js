@@ -106,7 +106,7 @@ router.put('/:id', requireAuth, canAccessTask, async (req, res) => {
 });
 
 // DELETE task (admin only)
-router.delete('/:id', requireAdmin, async (req, res) => {
+router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     // Delete task (admin only)

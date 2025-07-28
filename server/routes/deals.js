@@ -111,7 +111,7 @@ router.put('/:id', requireAuth, canAccessDeal, async (req, res) => {
 });
 
 // DELETE deal (admin only)
-router.delete('/:id', requireAdmin, async (req, res) => {
+router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     // Delete deal (admin only)

@@ -5,13 +5,9 @@ import Login from '../../components/Login';
 import { AuthProvider } from '../../contexts/AuthContext';
 
 // Mock the AuthContext
+const mockUseAuth = jest.fn();
 jest.mock('../../contexts/AuthContext', () => ({
-  useAuth: () => ({
-    login: jest.fn(),
-    error: null,
-    user: null,
-    loading: false
-  }),
+  useAuth: () => mockUseAuth(),
   AuthProvider: ({ children }) => <div data-testid="auth-provider">{children}</div>
 }));
 
@@ -32,7 +28,18 @@ const renderWithProviders = (component) => {
 };
 
 describe('Login Component', () => {
+  beforeEach(() => {
+    mockUseAuth.mockClear();
+  });
+
   it('renders login form', () => {
+    mockUseAuth.mockReturnValue({
+      login: jest.fn(),
+      error: null,
+      user: null,
+      loading: false
+    });
+
     renderWithProviders(<Login />);
     
     expect(screen.getByPlaceholderText(/email address/i)).toBeInTheDocument();
@@ -41,7 +48,6 @@ describe('Login Component', () => {
   });
 
   it('shows error message when provided', () => {
-    const mockUseAuth = require('../../contexts/AuthContext').useAuth;
     mockUseAuth.mockReturnValue({
       login: jest.fn(),
       error: 'Invalid credentials',
@@ -56,7 +62,6 @@ describe('Login Component', () => {
 
   it('handles form submission', async () => {
     const mockLogin = jest.fn();
-    const mockUseAuth = require('../../contexts/AuthContext').useAuth;
     mockUseAuth.mockReturnValue({
       login: mockLogin,
       error: null,

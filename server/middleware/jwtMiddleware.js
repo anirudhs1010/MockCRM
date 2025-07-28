@@ -14,14 +14,14 @@ const requireAuth = async (req, res, next) => {
 
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-    console.log('Decoded token:', decoded);
+    // console.log('Decoded token:', decoded);
     
     // Fetch full user data from database
     const userResult = await pool.query(
       'SELECT * FROM users WHERE id = $1',
       [decoded.userId]
     );
-    console.log('User query result:', userResult.rows);
+    // console.log('User query result:', userResult.rows);
     
     if (userResult.rows.length === 0) {
       return res.status(401).json({ error: 'User not found' });
@@ -39,7 +39,11 @@ const requireAuth = async (req, res, next) => {
 
 // Check if user has admin role
 const requireAdmin = (req, res, next) => {
-  if (req.user && req.user.role === 'admin') {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Authentication required' });
+  }
+  
+  if (req.user.role === 'admin') {
     return next();
   }
   res.status(403).json({ error: 'Admin access required' });
