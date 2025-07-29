@@ -1,6 +1,6 @@
 # MockCRM
 
-A modern, full-stack CRM application built with Node.js/Express backend and React frontend, featuring role-based access control, invite-only user registration, and comprehensive business management tools.
+A modern, full-stack CRM application built with Node.js/Express backend and React frontend, featuring role-based access control, invite-only user registration, and comprehensive business management tools. Documentation available at: https://deepwiki.com/anirudhs1010/MockCRM
 
 ## Features
 
