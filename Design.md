@@ -219,9 +219,11 @@ DB_PORT=5432
 - **Access**: Admin users only
 - **Process**: 
   1. Admin creates user account with email, name, and role
-  2. User account is created without password (password_hash = NULL)
-  3. User receives invitation and can register with their email
-  4. User sets their own password during registration
+  2. **User is added to admin's account by default** (prevents account proliferation)
+  3. **Optional**: Admin can specify `account_id` to add user to different account
+  4. User account is created without password (password_hash = NULL)
+  5. User receives invitation and can register with their email
+  6. User sets their own password during registration
 
 ### User Registration (Invite-Only)
 - **Endpoint**: `POST /auth/register`
@@ -264,6 +266,10 @@ DB_PORT=5432
 - **tasks**: Table exists. 1 task present, status is 'in_progress', deal_id matches existing deal.
 
 ## Observed Discrepancies and Bugs
+- **FIXED**: Account proliferation issue - users now get added to admin's account instead of creating new accounts
+  - Fixed in `/auth/admin/create-user` endpoint
+  - Fixed in `/admin/users` endpoint  
+  - Both endpoints now add users to admin's account by default
 - All account names are set to "undefined's Account". This is likely a bug in the account creation logic and should be fixed.
 - Only two deal stages are present; the rest of the default stages described in the design are missing. Consider re-inserting all default stages if the full sales pipeline is desired.
 - Data is sparse, but the schema matches the intended design.

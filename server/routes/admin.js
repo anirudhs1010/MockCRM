@@ -96,12 +96,20 @@ router.post('/users', async (req, res) => {
   try {
     const { name, email, role } = req.body;
     
-    // For now, create a placeholder user that can be activated later
-    // Create user account (they will set their password during registration)
+    // Check if user already exists
+    const existingUser = await pool.query(
+      'SELECT * FROM users WHERE email = $1',
+      [email]
+    );
+
+    if (existingUser.rows.length > 0) {
+      return res.status(400).json({ error: 'User already exists with this email' });
+    }
     
+    // Add user to admin's account (prevents account proliferation)
     const result = await pool.query(
-              'INSERT INTO users (account_id, name, email, role) VALUES ($1, $2, $3, $4) RETURNING id, name, email, role, created_at',
-        [req.user.account_id, name, email, role || 'sales_rep']
+      'INSERT INTO users (account_id, name, email, role) VALUES ($1, $2, $3, $4) RETURNING id, name, email, role, created_at',
+      [req.user.account_id, name, email, role || 'sales_rep']
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {

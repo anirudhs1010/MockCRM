@@ -73,7 +73,7 @@ router.post('/admin/create-user', requireAuth, async (req, res) => {
       return res.status(403).json({ error: 'Only administrators can create new users' });
     }
 
-    const { email, name, role = 'sales_rep' } = req.body;
+    const { email, name, role = 'sales_rep', account_id } = req.body;
 
     if (!email || !name) {
       return res.status(400).json({ error: 'Email and name are required' });
@@ -94,17 +94,23 @@ router.post('/admin/create-user', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'User already exists with this email' });
     }
 
-    // Create account for the user
-    const accountResult = await pool.query(
-      'INSERT INTO accounts (name) VALUES ($1) RETURNING id',
-      [`${name}'s Account`]
+    // Add user to the specified account or admin's account by default
+    const targetAccountId = account_id || req.user.account_id;
+
+    // Verify the target account exists and admin has access to it
+    const accountCheck = await pool.query(
+      'SELECT id FROM accounts WHERE id = $1',
+      [targetAccountId]
     );
-    const accountId = accountResult.rows[0].id;
+
+    if (accountCheck.rows.length === 0) {
+      return res.status(400).json({ error: 'Specified account does not exist' });
+    }
 
     // Create user without password (they will set it during registration)
     const userResult = await pool.query(
       'INSERT INTO users (account_id, email, name, role) VALUES ($1, $2, $3, $4) RETURNING id, email, name, role',
-      [accountId, email, name, role]
+      [targetAccountId, email, name, role]
     );
 
     const user = userResult.rows[0];
